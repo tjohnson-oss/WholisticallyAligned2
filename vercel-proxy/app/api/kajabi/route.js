@@ -1,9 +1,8 @@
-// WAAM™ Proxy — Next.js App Router API Route
-// Deployed on Vercel. Keeps the Anthropic API key server-side only.
-// Set ANTHROPIC_API_KEY and ALLOWED_ORIGIN in Vercel environment variables.
+// Kajabi Proxy — Next.js App Router API Route
+// Keeps the Kajabi API key server-side only.
+// Set KAJABI_API_KEY and KAJABI_SITE_URL in Vercel environment variables.
 
 // ALLOWED_ORIGINS: comma-separated list of allowed origins
-// e.g. "https://www.wholisticallyaligned.com,https://wholisticallyaligned.mykajabi.com"
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || process.env.ALLOWED_ORIGIN || '*')
   .split(',').map(s => s.trim());
 
@@ -22,10 +21,12 @@ export async function OPTIONS(request) {
 }
 
 export async function POST(request) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
+  const apiKey = process.env.KAJABI_API_KEY;
+  const siteUrl = process.env.KAJABI_SITE_URL;
+
+  if (!apiKey || !siteUrl) {
     return Response.json(
-      { error: 'API key not configured' },
+      { error: 'Kajabi credentials not configured' },
       { status: 500, headers: corsHeaders(request) }
     );
   }
@@ -40,20 +41,19 @@ export async function POST(request) {
     );
   }
 
-  const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
+  const kajabiRes = await fetch(`${siteUrl}/api/v1/contacts`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
+      'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify(body),
   });
 
-  const data = await anthropicRes.json();
+  const data = await kajabiRes.json().catch(() => ({}));
 
   return Response.json(data, {
-    status: anthropicRes.status,
+    status: kajabiRes.status,
     headers: corsHeaders(request),
   });
 }
