@@ -28,54 +28,6 @@ export async function OPTIONS(request) {
   return new Response(null, { status: 204, headers: corsHeaders(request) });
 }
 
-// ── TEMPORARY setup helper (safe to delete after you have your Site ID) ───
-// GET /api/kajabi  →  uses KAJABI_API_KEY/SECRET to look up your Site ID and
-// confirm the `assessment-complete` tag exists. Returns no secrets.
-export async function GET(request) {
-  const cors = corsHeaders(request);
-  const clientId = process.env.KAJABI_API_KEY;
-  const clientSecret = process.env.KAJABI_API_SECRET;
-  if (!clientId || !clientSecret) {
-    return Response.json(
-      { error: 'Set KAJABI_API_KEY and KAJABI_API_SECRET in Vercel first' },
-      { status: 500, headers: cors }
-    );
-  }
-  try {
-    const token = await getAccessToken(clientId, clientSecret);
-    const sitesRes = await fetch(`${KAJABI_API_BASE}/sites`, {
-      headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.api+json' },
-    });
-    const sitesJson = await sitesRes.json().catch(() => ({}));
-    if (!sitesRes.ok) {
-      return Response.json(
-        { error: `List sites failed (${sitesRes.status})`, detail: JSON.stringify(sitesJson).slice(0, 400) },
-        { status: 502, headers: cors }
-      );
-    }
-    const sites = (sitesJson.data || []).map(s => ({ id: s.id, attributes: s.attributes }));
-    let assessmentCompleteTag = null;
-    if (sites[0]) {
-      const id = await findTagId(token, sites[0].id, 'assessment-complete');
-      assessmentCompleteTag = { name: 'assessment-complete', exists: !!id, id };
-    }
-    return Response.json(
-      {
-        ok: true,
-        hint: 'Copy the site id below into the KAJABI_SITE_ID env var in Vercel, then redeploy. Delete this GET handler afterward.',
-        sites,
-        assessmentCompleteTag,
-      },
-      { status: 200, headers: cors }
-    );
-  } catch (err) {
-    return Response.json(
-      { error: 'Setup lookup failed', detail: String(err.message || err).slice(0, 400) },
-      { status: 502, headers: cors }
-    );
-  }
-}
-
 // ── Step 1: OAuth client-credentials token ───────────────────────────────
 async function getAccessToken(clientId, clientSecret) {
   const res = await fetch(`${KAJABI_API_BASE}/oauth/token`, {
