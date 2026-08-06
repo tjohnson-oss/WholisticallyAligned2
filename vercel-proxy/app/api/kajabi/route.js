@@ -1,29 +1,28 @@
 // Kajabi Proxy — Next.js App Router API Route
-// Submits a Kajabi FORM on behalf of the assessment taker via Kajabi's Public API.
+// Submits a Kajabi FORM on behalf of the assessment taker, then tags the contact.
 //
 // Why a form (and not a raw contact create): submitting a form is what OPTS THE
 // CONTACT IN to email marketing. Contacts created through the /contacts API land as
 // "Never subscribed", and Kajabi will not send marketing/automation emails to them —
 // which is why the assessment follow-up email never arrived. A form submission fixes
-// that. Per each form's own Kajabi config, this single call also:
-//   • subscribes the contact (opt-in)         ← the fix
-//   • adds the form's tag(s)                   ← e.g. assessment-complete / -spanish
-//   • triggers the attached automation(s) / sequences
+// that opt-in. After it succeeds we look the contact up by email and attach the
+// language tag ourselves, so the follow-up automation reliably fires (best-effort —
+// the opt-in has already happened, so a tagging hiccup never fails the request).
 //
-// REQUIREMENT (configured in Kajabi, NOT here): each form must be SINGLE opt-in, and
-// must add its language tag (or have the automation attached) so the sequence fires.
+// REQUIREMENT (configured in Kajabi, NOT here): each form must be SINGLE opt-in.
 // If a form is left on the default DOUBLE opt-in, the taker gets a confirmation email
 // and stays unsubscribed until they click it — so no automation email goes out.
 //
 // All secrets stay server-side. Set these in Vercel → Settings → Environment Variables:
 //   KAJABI_API_KEY     — Kajabi API Key    (used as OAuth client_id)
 //   KAJABI_API_SECRET  — Kajabi API Secret (used as OAuth client_secret)
+//   KAJABI_SITE_ID     — numeric Site ID   (used to look up the contact + resolve tags)
 //   KAJABI_FORM_ID_EN  — English form id   (optional; defaults below)
 //   KAJABI_FORM_ID_ES  — Spanish form id   (optional; defaults below)
 //   ALLOWED_ORIGINS    — comma-separated allowed origins (optional; defaults to *)
 //
 // Kajabi API reference: https://help.kajabi.com/api-reference/forms/submit-form
-// Flow: OAuth token → POST /v1/forms/{id}/submit  (JSON:API, Bearer auth).
+// Flow: OAuth token → POST /v1/forms/{id}/submit → find contact → attach tag(s).
 
 const KAJABI_API_BASE = 'https://api.kajabi.com/v1';
 
@@ -34,8 +33,16 @@ const FORM_IDS = {
   es: process.env.KAJABI_FORM_ID_ES || '2149686352', // "Assessment Form - Spanish"
 };
 
+// Base automation tag per language (fallback if the embed sends no tags array).
+const BASE_TAG = {
+  en: 'assessment-complete',
+  es: 'assessment-complete-spanish',
+};
+
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || process.env.ALLOWED_ORIGIN || '*')
   .split(',').map(s => s.trim());
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function corsHeaders(request) {
   const origin = request?.headers?.get('origin') || '';
@@ -72,7 +79,8 @@ async function getAccessToken(clientId, clientSecret) {
 }
 
 // ── Step 2: Submit the form (JSON:API). Returns the new form_submission id. ─
-// This is the call that opts the contact in + fires the form's tags/automation.
+// This is the call that opts the contact in (single opt-in) + fires anything the
+// form itself is configured to do.
 async function submitForm(token, formId, { name, email }) {
   const res = await fetch(`${KAJABI_API_BASE}/forms/${formId}/submit`, {
     method: 'POST',
@@ -96,6 +104,54 @@ async function submitForm(token, formId, { name, email }) {
   return json?.data?.id;
 }
 
+// ── Step 3: Find the contact id by email (filter[search] matches name or email) ─
+async function findContactId(token, siteId, email) {
+  const url = `${KAJABI_API_BASE}/contacts`
+    + `?filter[site_id]=${encodeURIComponent(siteId)}`
+    + `&filter[search]=${encodeURIComponent(email)}`
+    + `&page[size]=100`;
+  const res = await fetch(url, {
+    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.api+json' },
+  });
+  if (!res.ok) return null;
+  const json = await res.json().catch(() => ({}));
+  const match = (json.data || []).find(
+    (c) => (c.attributes?.email || '').toLowerCase() === email.toLowerCase()
+  );
+  return match ? match.id : null;
+}
+
+// ── Step 4: Resolve a tag NAME to its numeric id (tags must already exist) ─
+async function findTagId(token, siteId, name) {
+  const url = `${KAJABI_API_BASE}/contact_tags`
+    + `?filter[site_id]=${encodeURIComponent(siteId)}`
+    + `&filter[name_cont]=${encodeURIComponent(name)}`
+    + `&page[size]=100`;
+  const res = await fetch(url, {
+    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.api+json' },
+  });
+  if (!res.ok) return null;
+  const json = await res.json().catch(() => ({}));
+  // name_cont is a "contains" match — pick the exact (case-insensitive) name.
+  const match = (json.data || []).find(
+    (t) => (t.attributes?.name || '').toLowerCase() === name.toLowerCase()
+  );
+  return match ? match.id : null;
+}
+
+// ── Step 5: Attach tag id(s) to the contact ──────────────────────────────
+async function addTags(token, contactId, tagIds) {
+  if (!tagIds.length) return;
+  await fetch(`${KAJABI_API_BASE}/contacts/${contactId}/relationships/tags`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/vnd.api+json',
+    },
+    body: JSON.stringify({ data: tagIds.map((id) => ({ type: 'contact_tags', id: String(id) })) }),
+  });
+}
+
 // Pick EN vs ES from the payload the embeds already send — no embed change needed.
 // Primary signal: customFields.assessment_language ('en'|'es'). Fallbacks: an explicit
 // body.lang, then any "spanish" tag (ES base tag is `assessment-complete-spanish`).
@@ -103,7 +159,7 @@ function resolveLang(body) {
   const explicit = String(body.lang || body?.customFields?.assessment_language || '').toLowerCase();
   if (explicit === 'es' || explicit === 'en') return explicit;
   const tags = Array.isArray(body.tags) ? body.tags : [];
-  if (tags.some(t => String(t).toLowerCase().includes('spanish'))) return 'es';
+  if (tags.some((t) => String(t).toLowerCase().includes('spanish'))) return 'es';
   return 'en';
 }
 
@@ -111,6 +167,7 @@ export async function POST(request) {
   const cors = corsHeaders(request);
   const clientId = process.env.KAJABI_API_KEY;
   const clientSecret = process.env.KAJABI_API_SECRET;
+  const siteId = process.env.KAJABI_SITE_ID;
 
   if (!clientId || !clientSecret) {
     return Response.json(
@@ -146,8 +203,53 @@ export async function POST(request) {
     const token = await getAccessToken(clientId, clientSecret);
     const formSubmissionId = await submitForm(token, formId, { name, email });
 
+    // ── Best-effort tagging ────────────────────────────────────────────────
+    // The form submit already opted the contact in; now attach the language tag
+    // so the automation fires. Any failure here is non-fatal (opt-in succeeded).
+    // Apply whatever tags the embed sent; fall back to the base language tag.
+    const wantTags = (Array.isArray(body.tags) && body.tags.length)
+      ? body.tags.filter(Boolean)
+      : [BASE_TAG[lang]].filter(Boolean);
+
+    let contactId = null;
+    const tagsApplied = [];
+    const tagsMissing = [];
+    let tagNote;
+
+    try {
+      if (!siteId) {
+        tagNote = 'KAJABI_SITE_ID not set; tagging skipped';
+      } else {
+        // The contact can take a beat to be queryable right after submission.
+        contactId = await findContactId(token, siteId, email);
+        if (!contactId) { await sleep(800); contactId = await findContactId(token, siteId, email); }
+
+        if (!contactId) {
+          tagNote = 'contact not found after submit; tagging skipped';
+        } else {
+          const tagIds = [];
+          for (const tagName of wantTags) {
+            const id = await findTagId(token, siteId, tagName);
+            if (id) { tagIds.push(id); tagsApplied.push(tagName); } else { tagsMissing.push(tagName); }
+          }
+          if (tagIds.length) await addTags(token, contactId, tagIds);
+        }
+      }
+    } catch (tagErr) {
+      tagNote = `tagging error: ${String(tagErr.message || tagErr).slice(0, 200)}`;
+    }
+
     return Response.json(
-      { ok: true, lang, formId, formSubmissionId },
+      {
+        ok: true,
+        lang,
+        formId,
+        formSubmissionId,
+        contactId,
+        tagsApplied,
+        tagsMissing,
+        ...(tagNote ? { tagNote } : {}),
+      },
       { status: 200, headers: cors }
     );
   } catch (err) {
