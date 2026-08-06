@@ -105,20 +105,40 @@ async function submitForm(token, formId, { name, email }) {
 }
 
 // ── Step 3: Find the contact id by email (filter[search] matches name or email) ─
-async function findContactId(token, siteId, email) {
+// filter[search] is a substring match. We search the full email first; if that
+// returns no exact hit we retry on the local part with any Gmail "+tag" stripped
+// (covers plus-addressed emails whose "+" the search may tokenize away). Returns
+// { id, status, count } so the caller can report why a lookup came up empty.
+async function searchContacts(token, siteId, term) {
   const url = `${KAJABI_API_BASE}/contacts`
     + `?filter[site_id]=${encodeURIComponent(siteId)}`
-    + `&filter[search]=${encodeURIComponent(email)}`
+    + `&filter[search]=${encodeURIComponent(term)}`
     + `&page[size]=100`;
   const res = await fetch(url, {
     headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.api+json' },
   });
-  if (!res.ok) return null;
+  if (!res.ok) return { status: res.status, data: [] };
   const json = await res.json().catch(() => ({}));
-  const match = (json.data || []).find(
-    (c) => (c.attributes?.email || '').toLowerCase() === email.toLowerCase()
-  );
-  return match ? match.id : null;
+  return { status: res.status, data: json.data || [] };
+}
+
+async function findContactId(token, siteId, email) {
+  const local = email.split('@')[0] || '';
+  const baseLocal = local.split('+')[0]; // strip "+tag" for the fallback search
+  const terms = baseLocal && baseLocal !== local ? [email, baseLocal] : [email];
+
+  let status = null;
+  let count = 0;
+  for (const term of terms) {
+    const r = await searchContacts(token, siteId, term);
+    status = r.status;
+    count += r.data.length;
+    const match = r.data.find(
+      (c) => (c.attributes?.email || '').toLowerCase() === email.toLowerCase()
+    );
+    if (match) return { id: match.id, status: r.status, count: r.data.length };
+  }
+  return { id: null, status, count };
 }
 
 // ── Step 4: Resolve a tag NAME to its numeric id (tags must already exist) ─
@@ -221,11 +241,16 @@ export async function POST(request) {
         tagNote = 'KAJABI_SITE_ID not set; tagging skipped';
       } else {
         // The contact can take a beat to be queryable right after submission.
-        contactId = await findContactId(token, siteId, email);
-        if (!contactId) { await sleep(800); contactId = await findContactId(token, siteId, email); }
+        let lookup = await findContactId(token, siteId, email);
+        if (!lookup.id) { await sleep(800); lookup = await findContactId(token, siteId, email); }
+        contactId = lookup.id;
 
         if (!contactId) {
-          tagNote = 'contact not found after submit; tagging skipped';
+          // No contact exists yet — the usual cause is the form being on DOUBLE
+          // opt-in (contact isn't created until the confirmation email is clicked).
+          tagNote = `contact not found after submit; tagging skipped `
+            + `(searchStatus=${lookup.status}, matches=${lookup.count}) `
+            + `— is the form on single opt-in?`;
         } else {
           const tagIds = [];
           for (const tagName of wantTags) {
