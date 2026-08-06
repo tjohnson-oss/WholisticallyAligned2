@@ -104,17 +104,16 @@ async function submitForm(token, formId, { name, email }) {
   return json?.data?.id;
 }
 
-// ── Step 3: Find the contact id by email (filter[search] matches name or email) ─
-// filter[search] is a substring match. We search the full email first; if that
-// returns no exact hit we retry on the local part with any Gmail "+tag" stripped
-// (covers plus-addressed emails whose "+" the search may tokenize away). Returns
-// { id, status, count } so the caller can report why a lookup came up empty.
-async function searchContacts(token, siteId, term) {
-  const url = `${KAJABI_API_BASE}/contacts`
-    + `?filter[site_id]=${encodeURIComponent(siteId)}`
-    + `&filter[search]=${encodeURIComponent(term)}`
-    + `&page[size]=100`;
-  const res = await fetch(url, {
+// ── Step 3: Find the contact id by email ──────────────────────────────────
+// Kajabi's contact `filter[search]` is index-backed and LAGS — a contact created
+// milliseconds earlier isn't searchable yet, so it can't be relied on right after a
+// form submit. The API is Ransack-style (we already use `filter[name_cont]`), so we
+// try direct DB predicates first (`email_eq`, then `email_cont`) which see a just-
+// created row immediately, and only fall back to `search`. Returns { id, status,
+// count, via } so the caller can report which method hit (or why none did).
+async function queryContacts(token, siteId, params) {
+  const qs = new URLSearchParams({ 'filter[site_id]': String(siteId), 'page[size]': '100', ...params });
+  const res = await fetch(`${KAJABI_API_BASE}/contacts?${qs.toString()}`, {
     headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.api+json' },
   });
   if (!res.ok) return { status: res.status, data: [] };
@@ -123,22 +122,30 @@ async function searchContacts(token, siteId, term) {
 }
 
 async function findContactId(token, siteId, email) {
+  const lower = email.toLowerCase();
+  const exact = (list) => list.find((c) => (c.attributes?.email || '').toLowerCase() === lower);
   const local = email.split('@')[0] || '';
-  const baseLocal = local.split('+')[0]; // strip "+tag" for the fallback search
-  const terms = baseLocal && baseLocal !== local ? [email, baseLocal] : [email];
+  const baseLocal = local.split('+')[0]; // strip Gmail "+tag" for the last-ditch search
+
+  const attempts = [
+    { via: 'email_eq', params: { 'filter[email_eq]': email } },
+    { via: 'email_cont', params: { 'filter[email_cont]': email } },
+    { via: 'search_full', params: { 'filter[search]': email } },
+  ];
+  if (baseLocal && baseLocal !== local) {
+    attempts.push({ via: 'search_base', params: { 'filter[search]': baseLocal } });
+  }
 
   let status = null;
   let count = 0;
-  for (const term of terms) {
-    const r = await searchContacts(token, siteId, term);
+  for (const a of attempts) {
+    const r = await queryContacts(token, siteId, a.params);
     status = r.status;
     count += r.data.length;
-    const match = r.data.find(
-      (c) => (c.attributes?.email || '').toLowerCase() === email.toLowerCase()
-    );
-    if (match) return { id: match.id, status: r.status, count: r.data.length };
+    const match = exact(r.data);
+    if (match) return { id: match.id, status: r.status, count: r.data.length, via: a.via };
   }
-  return { id: null, status, count };
+  return { id: null, status, count, via: null };
 }
 
 // ── Step 4: Resolve a tag NAME to its numeric id (tags must already exist) ─
@@ -232,6 +239,7 @@ export async function POST(request) {
       : [BASE_TAG[lang]].filter(Boolean);
 
     let contactId = null;
+    let lookupVia;
     const tagsApplied = [];
     const tagsMissing = [];
     let tagNote;
@@ -246,12 +254,10 @@ export async function POST(request) {
         contactId = lookup.id;
 
         if (!contactId) {
-          // No contact exists yet — the usual cause is the form being on DOUBLE
-          // opt-in (contact isn't created until the confirmation email is clicked).
           tagNote = `contact not found after submit; tagging skipped `
-            + `(searchStatus=${lookup.status}, matches=${lookup.count}) `
-            + `— is the form on single opt-in?`;
+            + `(status=${lookup.status}, seen=${lookup.count})`;
         } else {
+          lookupVia = lookup.via;
           const tagIds = [];
           for (const tagName of wantTags) {
             const id = await findTagId(token, siteId, tagName);
@@ -271,6 +277,7 @@ export async function POST(request) {
         formId,
         formSubmissionId,
         contactId,
+        ...(lookupVia ? { lookupVia } : {}),
         tagsApplied,
         tagsMissing,
         ...(tagNote ? { tagNote } : {}),
