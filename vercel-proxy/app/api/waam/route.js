@@ -2,6 +2,10 @@
 // Deployed on Vercel. Keeps the Anthropic API key server-side only.
 // Set ANTHROPIC_API_KEY and ALLOWED_ORIGIN in Vercel environment variables.
 
+// Long-running: the WAAM analysis can take ~60-70s at max_tokens 4000.
+// Without this, Vercel's default cap can 504 the request mid-generation.
+export const maxDuration = 120;
+
 // ALLOWED_ORIGINS: comma-separated list of allowed origins
 // e.g. "https://www.wholisticallyaligned.com,https://wholisticallyaligned.mykajabi.com"
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || process.env.ALLOWED_ORIGIN || '*')

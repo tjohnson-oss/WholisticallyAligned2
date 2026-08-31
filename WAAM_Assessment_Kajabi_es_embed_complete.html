@@ -1,0 +1,990 @@
+<!-- ============================================================
+     WAAM™ Evaluacion (v2) — Kajabi Code Block Embed (ESPANOL)
+     Generated from WAAM_Evaluacion_Kajabi_Espanolnew.html
+
+     Pega este archivo COMPLETO en un bloque de codigo (Code Block) de Kajabi.
+
+     WIRED (no secrets in this file):
+       - AI analysis   -> /api/waam   proxy (Anthropic key in Vercel env)
+       - Email capture -> /api/kajabi proxy (Kajabi opt-in form submit, lang=es
+                          -> Spanish form 2149686352)
+         Base: https://wholistically-aligned2.vercel.app
+       - CSS scoped to #waam-root; JS in an IIFE; on* handlers exposed as
+         window.waam* so nothing collides with Kajabi's page.
+
+     TODO before go-live (client-supplied offer links, see KAJABI.OFFERS):
+       foundation (Intro al MBSR), dbt, mbsrER, clinicalReview.
+       "eating" (Alimentacion Consciente) reuses the confirmed EN link.
+       Spanish MBSR Series I token on file: 5XY3pjzM.
+     ============================================================ -->
+
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  #waam-root{
+    --teal:#1B6B6B; --teal-lt:#E0F2F1; --teal-med:#4DB6AC; --teal-dark:#0D4040;
+    --sage:#2E7D52; --sage-lt:#E8F5EE; --plum:#6B3FA0; --plum-lt:#F0EBF8;
+    --ocean:#1A4A6B; --ocean-lt:#E6F0FA; --coral:#C0573B; --coral-lt:#FDEEE9;
+    --gold:#9A6B0A; --gold-lt:#FEF8E8; --amber:#B5650A; --amber-lt:#FFF8E1;
+    --charcoal:#1E1E2E; --gray:#4A4A5A; --mid:#7A7A8A; --white:#FFF; --bg:#F7FAF8;
+  }
+  #waam-root *{box-sizing:border-box;margin:0;padding:0}
+  #waam-root{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--charcoal);min-height:100vh}
+  #waam-root .header{background:var(--teal);color:#fff;padding:24px 40px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(27,107,107,.3)}
+  #waam-root .header-brand{display:flex;align-items:center;gap:14px}
+  #waam-root .header-logo{width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:20px}
+  #waam-root .header-name{font-size:17px;font-weight:600;letter-spacing:-.3px}
+  #waam-root .header-sub{font-size:11.5px;opacity:.75;margin-top:2px}
+  #waam-root .header-timer{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:24px;padding:8px 18px;font-size:14px;font-weight:500;display:flex;align-items:center;gap:8px}
+  #waam-root .timer-dot{width:7px;height:7px;border-radius:50%;background:#4DB6AC;animation:waam-pulse 2s infinite}
+  @keyframes waam-pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  #waam-root .progress-bar{height:4px;background:rgba(255,255,255,.2)}
+  #waam-root .progress-fill{height:100%;background:var(--teal-med);transition:width .5s ease;border-radius:0 2px 2px 0}
+  #waam-root .main{max-width:820px;margin:0 auto;padding:40px 24px 80px}
+  #waam-root .section-card{background:#fff;border-radius:16px;border:1px solid #E8EEE8;margin-bottom:24px;overflow:hidden}
+  #waam-root .section-header{padding:20px 28px 16px;border-bottom:1px solid #F0F4F0;display:flex;align-items:center;gap:14px}
+  #waam-root .section-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+  #waam-root .section-title{font-family:'DM Serif Display',serif;font-size:18px}
+  #waam-root .section-code{font-size:10px;font-weight:600;letter-spacing:1px;color:var(--teal-med);text-transform:uppercase;margin-top:2px}
+  #waam-root .section-desc{font-size:13px;color:var(--mid);margin-top:3px}
+  #waam-root .section-body{padding:24px 28px}
+  #waam-root .q-block{margin-bottom:28px}
+  #waam-root .q-block:last-child{margin-bottom:0}
+  #waam-root .q-label{font-size:14px;font-weight:500;margin-bottom:12px;display:flex;align-items:flex-start;gap:8px;line-height:1.55}
+  #waam-root .q-num{width:24px;height:22px;border-radius:6px;background:var(--teal-lt);color:var(--teal);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+  #waam-root .likert{display:flex;gap:6px;flex-wrap:wrap}
+  #waam-root .likert-opt{flex:1;min-width:70px;border:1.5px solid #E0E8E0;border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;transition:all .15s;background:#fff}
+  #waam-root .likert-opt:hover{border-color:var(--teal-med);background:var(--teal-lt)}
+  #waam-root .likert-opt.selected{border-color:var(--teal);background:var(--teal);color:#fff}
+  #waam-root .likert-opt .opt-num{font-size:16px;font-weight:600;display:block}
+  #waam-root .likert-opt .opt-lbl{font-size:10px;opacity:.75;display:block;margin-top:3px;line-height:1.3}
+  #waam-root .radio-pills{display:flex;flex-wrap:wrap;gap:8px}
+  #waam-root .radio-pill{border:1.5px solid #E0E8E0;border-radius:24px;padding:8px 16px;font-size:13px;cursor:pointer;transition:all .15s;background:#fff;white-space:nowrap}
+  #waam-root .radio-pill:hover{border-color:var(--teal-med);background:var(--teal-lt)}
+  #waam-root .radio-pill.selected{border-color:var(--teal);background:var(--teal);color:#fff}
+  #waam-root textarea{width:100%;border:1.5px solid #E0E8E0;border-radius:10px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:14px;resize:vertical;min-height:80px;outline:none;background:#fff}
+  #waam-root textarea:focus{border-color:var(--teal-med)}
+  #waam-root .intro-screen{text-align:center;padding:48px 24px}
+  #waam-root .intro-badge{display:inline-flex;align-items:center;gap:8px;background:var(--teal-lt);color:var(--teal);border-radius:24px;padding:8px 20px;font-size:13px;font-weight:500;margin-bottom:24px}
+  #waam-root .waam-mark{display:inline-block;background:var(--teal-dark);color:#fff;border-radius:12px;padding:20px 32px;margin-bottom:24px}
+  #waam-root .waam-mark .wm-title{font-family:'DM Serif Display',serif;font-size:38px;letter-spacing:2px}
+  #waam-root .waam-mark .wm-tm{font-size:14px;vertical-align:super}
+  #waam-root .waam-mark .wm-sub{font-size:12px;letter-spacing:2.5px;text-transform:uppercase;opacity:.8;margin-top:6px}
+  #waam-root .intro-title{font-family:'DM Serif Display',serif;font-size:30px;line-height:1.25;margin-bottom:14px}
+  #waam-root .intro-sub{font-size:15.5px;color:var(--gray);line-height:1.7;max-width:560px;margin:0 auto 32px}
+  #waam-root .intro-domains{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;max-width:640px;margin:0 auto 36px}
+  #waam-root .intro-domain{background:#fff;border:1px solid #E8EEE8;border-radius:12px;padding:14px 12px;text-align:center}
+  #waam-root .intro-domain-code{font-size:10px;font-weight:600;letter-spacing:1px;color:var(--teal-med)}
+  #waam-root .intro-domain-icon{font-size:22px;display:block;margin:4px 0 6px}
+  #waam-root .intro-domain-name{font-size:11.5px;font-weight:500;color:var(--gray);line-height:1.35}
+  #waam-root .intro-disclaimer{background:var(--amber-lt);border:1px solid #F0D090;border-radius:10px;padding:14px 18px;font-size:13px;color:var(--amber);max-width:600px;margin:0 auto 30px;text-align:left;line-height:1.6}
+  #waam-root .btn-primary{background:var(--teal);color:#fff;border:none;border-radius:12px;padding:16px 40px;font-size:16px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;display:inline-flex;align-items:center;gap:10px}
+  #waam-root .btn-primary:hover{background:#155757;transform:translateY(-1px)}
+  #waam-root .results-header{text-align:center;padding:40px 24px 28px;border-bottom:1px solid #E8EEE8;margin-bottom:28px}
+  #waam-root .results-title{font-family:'DM Serif Display',serif;font-size:30px;margin-bottom:8px}
+  #waam-root .results-sub{font-size:15px;color:var(--mid)}
+  #waam-root .wws-hero{background:var(--teal-dark);border-radius:20px;padding:32px;text-align:center;color:#fff;margin-bottom:24px}
+  #waam-root .wws-label{font-size:12px;letter-spacing:2px;text-transform:uppercase;opacity:.75;margin-bottom:8px}
+  #waam-root .wws-value{font-family:'DM Serif Display',serif;font-size:64px;line-height:1}
+  #waam-root .wws-tier{display:inline-block;border-radius:20px;padding:6px 20px;font-size:14px;font-weight:500;margin-top:14px}
+  #waam-root .score-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:28px}
+  #waam-root .score-card{background:#fff;border:1px solid #E8EEE8;border-radius:14px;padding:18px 16px;text-align:center}
+  #waam-root .score-code{font-size:9.5px;font-weight:600;letter-spacing:1px;color:var(--teal-med);margin-bottom:2px}
+  #waam-root .score-label{font-size:11px;font-weight:500;color:var(--mid);margin-bottom:10px;line-height:1.3}
+  #waam-root .score-bar-wrap{height:6px;background:#E8EEE8;border-radius:3px;margin-bottom:8px;overflow:hidden}
+  #waam-root .score-bar{height:100%;border-radius:3px;transition:width 1s ease}
+  #waam-root .score-val{font-size:20px;font-weight:600}
+  #waam-root .score-sev{font-size:11.5px;color:var(--mid);margin-top:4px}
+  #waam-root .severity-low{color:var(--sage)}#waam-root .bar-low{background:var(--sage)}
+  #waam-root .severity-mild{color:var(--gold)}#waam-root .bar-mild{background:var(--gold)}
+  #waam-root .severity-mod{color:var(--coral)}#waam-root .bar-mod{background:var(--coral)}
+  #waam-root .severity-severe{color:#8B1C1C}#waam-root .bar-severe{background:#8B1C1C}
+  #waam-root .ai-card{background:#fff;border:1px solid #E8EEE8;border-radius:16px;overflow:hidden;margin-bottom:24px}
+  #waam-root .ai-card-header{background:var(--teal);color:#fff;padding:18px 24px;display:flex;align-items:center;gap:12px}
+  #waam-root .ai-card-header h3{font-size:16px;font-weight:500}
+  #waam-root .ai-card-body{padding:24px}
+  #waam-root .ai-section{margin-bottom:24px}
+  #waam-root .ai-section:last-child{margin-bottom:0}
+  #waam-root .ai-content{font-size:14px;line-height:1.8}
+  #waam-root .ai-content p{margin-bottom:10px}
+  #waam-root .ai-content ul{padding-left:20px}
+  #waam-root .ai-content li{margin-bottom:6px}
+  #waam-root .loading-wrap{text-align:center;padding:48px}
+  #waam-root .spinner{width:44px;height:44px;border-radius:50%;border:3px solid var(--teal-lt);border-top-color:var(--teal);animation:waam-spin .8s linear infinite;margin:0 auto 20px}
+  @keyframes waam-spin{to{transform:rotate(360deg)}}
+  #waam-root .loading-text{font-size:15px;color:var(--mid)}
+  #waam-root .loading-dots::after{content:'';animation:waam-dots 1.5s infinite}
+  @keyframes waam-dots{0%{content:'.'}33%{content:'..'}66%{content:'...'}}
+  #waam-root .nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:32px;gap:12px}
+  #waam-root .btn-nav{border:1.5px solid #E0E8E0;background:#fff;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--gray);transition:all .15s;display:flex;align-items:center;gap:8px}
+  #waam-root .btn-nav:hover{border-color:var(--teal-med);color:var(--teal)}
+  #waam-root .btn-nav-primary{background:var(--teal);color:#fff;border-color:var(--teal)}
+  #waam-root .btn-nav-primary:hover{background:#155757;color:#fff;border-color:#155757}
+  #waam-root .val-msg{font-size:12px;color:var(--coral);margin-top:6px;display:none}
+  #waam-root .val-msg.show{display:block}
+  #waam-root .disclaimer-bar{background:var(--amber-lt);border-top:1px solid #F0D090;padding:14px 40px;font-size:12px;color:var(--amber);text-align:center;line-height:1.6}
+  #waam-root .gate-card{background:#fff;border:1px solid #E8EEE8;border-radius:20px;max-width:520px;margin:32px auto;padding:36px;text-align:center;box-shadow:0 8px 32px rgba(27,107,107,.1)}
+  #waam-root .gate-input{width:100%;border:1.5px solid #E0E8E0;border-radius:10px;padding:13px 16px;font-family:'DM Sans',sans-serif;font-size:15px;margin-bottom:12px;outline:none;transition:border-color .15s}
+  #waam-root .gate-input:focus{border-color:var(--teal-med)}
+  #waam-root .gate-consent{display:flex;align-items:flex-start;gap:10px;text-align:left;font-size:12px;color:var(--mid);line-height:1.6;margin:14px 0 20px}
+  #waam-root .rec-card{background:#fff;border:1.5px solid #E0E8E0;border-radius:16px;padding:22px;margin-bottom:14px;display:flex;gap:16px;align-items:flex-start;transition:all .15s}
+  #waam-root .rec-card:hover{border-color:var(--teal-med);box-shadow:0 4px 16px rgba(27,107,107,.1)}
+  #waam-root .rec-card.primary{border-color:var(--teal);border-width:2px;background:linear-gradient(135deg,#FAFDFB,#F0F9F7)}
+  #waam-root .rec-icon{width:48px;height:48px;border-radius:12px;background:var(--teal-lt);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+  #waam-root .rec-badge{display:inline-block;font-size:9.5px;font-weight:600;letter-spacing:1px;text-transform:uppercase;border-radius:10px;padding:3px 10px;margin-bottom:6px}
+  #waam-root .rec-title{font-size:16px;font-weight:600;color:var(--charcoal);margin-bottom:4px}
+  #waam-root .rec-why{font-size:13px;color:var(--gray);line-height:1.6;margin-bottom:10px}
+  #waam-root .rec-cta{display:inline-block;background:var(--teal);color:#fff;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:500;text-decoration:none;transition:background .15s}
+  #waam-root .rec-cta:hover{background:#155757}
+  #waam-root .rec-cta.ghost{background:transparent;color:var(--teal);border:1.5px solid var(--teal)}
+  #waam-root .rec-cta.ghost:hover{background:var(--teal-lt)}
+  #waam-root .goal-card{background:#fff;border:1.5px solid #E0E8E0;border-radius:14px;padding:20px;margin-bottom:14px;border-left:5px solid var(--teal)}
+  #waam-root .goal-domain{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--teal);background:var(--teal-lt);border-radius:12px;padding:4px 12px;margin-bottom:10px}
+  #waam-root .goal-text{width:100%;border:1.5px dashed transparent;border-radius:8px;padding:8px 10px;font-family:'DM Sans',sans-serif;font-size:14.5px;line-height:1.65;color:var(--charcoal);background:transparent;transition:all .15s;min-height:20px}
+  #waam-root .goal-text:hover{border-color:#D0DAD5;background:#FAFDFB}
+  #waam-root .goal-text:focus{border-color:var(--teal-med);background:#fff;outline:none}
+  #waam-root .goal-smart{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:12px}
+  #waam-root .goal-smart-item{background:#F7FAF8;border-radius:8px;padding:10px 12px}
+  #waam-root .goal-smart-k{font-size:9.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--teal-med);margin-bottom:3px}
+  #waam-root .goal-smart-v{font-size:12px;line-height:1.5;color:var(--gray);border:1px dashed transparent;border-radius:6px;padding:2px 4px}
+  #waam-root .goal-smart-v:hover{border-color:#D0DAD5}
+  #waam-root .goal-smart-v:focus{border-color:var(--teal-med);background:#fff;outline:none}
+  #waam-root .goal-hint{font-size:11.5px;color:var(--mid);text-align:center;margin:4px 0 16px}
+  #waam-root .btn-goals{background:#fff;border:1.5px solid var(--teal);color:var(--teal);border-radius:10px;padding:11px 22px;font-size:13.5px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;display:inline-flex;align-items:center;gap:8px}
+  #waam-root .btn-goals:hover{background:var(--teal);color:#fff}
+  #waam-root .ip-footer{text-align:center;font-size:10.5px;color:var(--mid);padding:16px 24px 8px;line-height:1.6}
+  @media (max-width:600px){#waam-root .header{padding:16px 20px}#waam-root .main{padding:24px 16px 60px}#waam-root .section-body{padding:18px}#waam-root .intro-title{font-size:24px}#waam-root .likert{gap:4px}#waam-root .likert-opt{min-width:48px;padding:8px 4px}#waam-root .wws-value{font-size:48px}}
+</style>
+
+<div id="waam-root">
+<div class="header">
+  <div class="header-brand">
+    <div class="header-logo">W</div>
+    <div>
+      <div class="header-name">Evaluación WAAM™</div>
+      <div class="header-sub">Método de Evaluación Wholistically Aligned · Edición Kajabi Español</div>
+    </div>
+  </div>
+  <div class="header-timer" id="timerDisplay" style="display:none">
+    <div class="timer-dot"></div><span id="timerVal">0:00</span>
+  </div>
+</div>
+<div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+<div class="main" id="mainContent"></div>
+
+<div class="disclaimer-bar">
+  La Evaluación WAAM™ es una herramienta psicoeducativa de bienestar desarrollada bajo la dirección clínica de una proveedora psiquiátrica certificada. No constituye un diagnóstico clínico ni consejo médico. En crisis, llama o envía un mensaje de texto al 988 (Línea de Prevención del Suicidio y Crisis — disponible en español), o envía HOLA al 741741.
+</div>
+<div class="ip-footer">
+  WAAM™, Wholistically Aligned Assessment Method™, WAAM Index™, Whole Wellness Score™ (WWS™), and WAAM Clinical Engine™ son marcas propietarias de Wholistically Aligned LLC. Patente en trámite. © 2026 Wholistically Aligned LLC. Todos los derechos reservados.
+</div>
+
+<script>
+(function(){
+// ─── Backend + config ───────────────────────────
+// Secrets (Anthropic + Kajabi API keys) live ONLY in Vercel env vars, never here.
+const WAAM_PROXY_URL   = "https://wholistically-aligned2.vercel.app/api/waam";
+const KAJABI_PROXY_URL = "https://wholistically-aligned2.vercel.app/api/kajabi";
+const SITE  = "https://www.wholisticallyaligned.com";
+const OFFER = t => SITE + "/offers/" + t + "/checkout";
+const KAJABI = {
+  LANGUAGE: "es",
+  OFFERS: {
+    // Interim wiring (2026-08-22): only Mindful Eating + MBSR Series I offers exist.
+    // MBSR Series I is reused for foundation AND mbsrER until the client confirms the
+    // mapping / creates dedicated Intro-to-MBSR + MBSR-Emotional-Regulation offers.
+    foundation:     OFFER("5XY3pjzM"), // MBSR Series I (ES) — interim foundation (confirm mapping)
+    dbt:            SITE + "/",         // DBT Regulacion Emocional — LINK PENDING (offer not created)
+    mbsrER:         OFFER("5XY3pjzM"), // MBSR Series I (ES) — interim (no separate MBSR-ER offer yet)
+    eating:         OFFER("VFanPqg2"), // Alimentacion Consciente (ES limited-access) — confirmed
+    clinicalReview: SITE + "/"          // Revision Clinica WAAM™ — LINK PENDING (offer not created)
+  }
+};
+
+const FREQ4  = ["Para nada","Varios días","Más de la mitad de los días","Casi todos los días"];
+const BOTHER3 = ["No presente","Levemente presente","Significativamente presente"];
+
+const SECTIONS = [
+  { id:"ARM", code:"WAAM-ARM™", title:"Regulación Afectiva y Estado de Ánimo", weight:1.4,
+    desc:"Dominio 1 · Tono emocional, vitalidad y estabilidad del ánimo", icon:"☁️", color:"#6B3FA0", iconBg:"#F0EBF8",
+    intro:"Reflexiona sobre las últimas dos semanas. Para cada experiencia, elige la frecuencia que mejor refleje tu realidad vivida — no tu mejor día ni tu peor día, sino el patrón general.",
+    questions:[
+      {id:"arm1",text:"¿Con qué frecuencia las actividades que antes te traían alegría o interés se han sentido planas, distantes o poco gratificantes?",type:"likert4",labels:FREQ4},
+      {id:"arm2",text:"¿Con qué frecuencia has experimentado una pesadez persistente en el ánimo — vacío, desánimo o la sensación de que las cosas no mejorarán?",type:"likert4",labels:FREQ4},
+      {id:"arm3",text:"¿Con qué frecuencia tu patrón de sueño ha cambiado notablemente — dificultad para iniciar el sueño, mantenerlo o dormir mucho más de lo habitual?",type:"likert4",labels:FREQ4},
+      {id:"arm4",text:"¿Con qué frecuencia te has sentido sin energía, como si hasta las tareas pequeñas requirieran un esfuerzo significativo?",type:"likert4",labels:FREQ4},
+      {id:"arm5",text:"¿Con qué frecuencia ha cambiado tu relación con la comida — comer notablemente menos de lo usual, o recurrir a la comida sin hambre física?",type:"likert4",labels:FREQ4},
+      {id:"arm6",text:"¿Con qué frecuencia has experimentado un juicio severo hacia ti mismo/a — sentirte una carga, una decepción o no lo suficientemente bueno/a?",type:"likert4",labels:FREQ4},
+      {id:"arm7",text:"¿Con qué frecuencia tu concentración se ha sentido nublada — perder el hilo al leer, ver algo o conversar?",type:"likert4",labels:FREQ4},
+      {id:"arm8",text:"¿Con qué frecuencia otros han notado cambios en tu ritmo — moverte o hablar más lento de lo usual, o sentirte físicamente incapaz de calmarte?",type:"likert4",labels:FREQ4},
+      {id:"arm9",text:"¿Con qué frecuencia has tenido pensamientos de que la vida no vale la pena, o pensamientos de hacerte daño?",type:"likert4",labels:FREQ4,flag:true},
+    ]},
+  { id:"ATS", code:"WAAM-ATS™", title:"Ansiedad y Sensibilidad a la Amenaza", weight:1.3,
+    desc:"Dominio 2 · Patrones de preocupación, activación del sistema nervioso y respuesta a la amenaza", icon:"🌀", color:"#1A4A6B", iconBg:"#E6F0FA",
+    intro:"Considera las últimas dos semanas. Estas preguntas exploran cómo tu sistema nervioso ha respondido a la vida diaria.",
+    questions:[
+      {id:"ats1",text:"¿Con qué frecuencia has notado tensión en tu cuerpo — una sensación de estar en alerta, acelerado/a o sin poder apagarte?",type:"likert4",labels:FREQ4},
+      {id:"ats2",text:"Cuando comienza la preocupación, ¿con qué frecuencia se siente como un ciclo del que no puedes salir, sin importar el esfuerzo?",type:"likert4",labels:FREQ4},
+      {id:"ats3",text:"¿Con qué frecuencia tu mente recorre múltiples áreas de tu vida, generando preocupación por varias cosas a la vez?",type:"likert4",labels:FREQ4},
+      {id:"ats4",text:"¿Qué tan difícil ha sido permitir que tu cuerpo y mente liberen la tensión por completo, incluso en entornos tranquilos?",type:"likert4",labels:FREQ4},
+      {id:"ats5",text:"¿Con qué frecuencia la inquietud interna hace que la quietud — estar sentado/a, esperar, descansar — se sienta incómoda?",type:"likert4",labels:FREQ4},
+      {id:"ats6",text:"¿Con qué frecuencia notas que tu paciencia se agota — irritación que llega más rápido o más fuerte de lo que la situación amerita?",type:"likert4",labels:FREQ4},
+      {id:"ats7",text:"¿Con qué frecuencia una sensación de temor o anticipación de que algo saldrá mal tiñe tu día?",type:"likert4",labels:FREQ4},
+    ]},
+  { id:"SRF", code:"WAAM-SRF™", title:"Arquitectura del Sueño y Función Reparadora", weight:1.2,
+    desc:"Dominio 3 · Cantidad, calidad y capacidad reparadora del sueño", icon:"🌙", color:"#1B6B6B", iconBg:"#E0F2F1",
+    intro:"Reflexiona sobre el último mes de sueño — el patrón general, no una sola noche.",
+    questions:[
+      {id:"srf1",text:"En una noche típica del último mes, ¿cuántas horas de sueño real ha recibido tu cuerpo?",type:"pills",options:["Menos de 5h","5–6 horas","6–7 horas","7–8 horas","Más de 8h"]},
+      {id:"srf2",text:"Una vez que te acuestas, ¿cuánto tiempo suele tomar que tu mente y cuerpo se entreguen al descanso?",type:"pills",options:["Menos de 15 min","15–30 min","30–60 min","Más de 60 min"]},
+      {id:"srf3",text:"¿Con qué frecuencia tu sueño ha sido fragmentado — despertar durante la noche o antes de lo previsto?",type:"pills",options:["Para nada","Menos de una vez/semana","1–2 veces/semana","3+ veces/semana"]},
+      {id:"srf4",text:"Al reflexionar sobre tu sueño en general, ¿qué tan reparador se ha sentido?",type:"likert5",labels:["Nada reparador","Ligeramente","Moderadamente","Mayormente","Profundamente reparador"]},
+      {id:"srf5",text:"¿Con qué frecuencia has necesitado una ayuda para dormir — con receta, sin receta o suplemento — para alcanzar el descanso?",type:"pills",options:["Nunca","Menos de una vez/semana","1–2 veces/semana","3+ veces/semana"]},
+      {id:"srf6",text:"¿Con qué frecuencia el descanso insuficiente te ha acompañado durante el día — afectando tu alerta, ánimo o desempeño?",type:"pills",options:["Nunca","Rara vez","A veces","Con frecuencia","Casi siempre"]},
+    ]},
+  { id:"NBM", code:"WAAM-NBM™", title:"Conducta Nutricional y Bienestar Metabólico", weight:1.0,
+    desc:"Dominio 4 · Patrones de nutrición y apoyo metabólico", icon:"🌿", color:"#2E7D52", iconBg:"#E8F5EE",
+    intro:"Considera tus patrones típicos de alimentación de las últimas dos semanas.",
+    questions:[
+      {id:"nbm1",text:"¿Cuántas porciones de frutas y verduras llegan a tu plato en un día típico?",type:"pills",options:["0–1 porciones","2–3 porciones","4–5 porciones","6+ porciones"]},
+      {id:"nbm2",text:"¿Con qué frecuencia aparecen en tu semana alimentos altamente procesados — comida rápida, snacks empaquetados, bebidas azucaradas?",type:"pills",options:["Rara vez / nunca","1–2 veces/semana","3–5 veces/semana","Diario","Varias veces al día"]},
+      {id:"nbm3",text:"¿Con qué consistencia tus comidas contienen nutrición balanceada — proteína, carbohidratos complejos y grasas saludables?",type:"pills",options:["Rara vez","A veces","La mayoría de las comidas","Casi siempre"]},
+      {id:"nbm4",text:"¿Cómo describirías la relación actual de tu apetito con las necesidades reales de tu cuerpo?",type:"pills",options:["Muy disminuido","Algo reducido","Bien equilibrado","Algo elevado","Muy elevado o compulsivo"]},
+      {id:"nbm5",text:"¿Con qué frecuencia saltas comidas o pasas largos períodos del día sin comer?",type:"pills",options:["Nunca","Rara vez","1–2 veces/semana","La mayoría de los días"]},
+      {id:"nbm6",text:"¿Cuánta agua recibe tu cuerpo en un día típico?",type:"pills",options:["Menos de 4 vasos","4–6 vasos","7–8 vasos","Más de 8 vasos"]},
+    ]},
+  { id:"PSB", code:"WAAM-PSB™", title:"Activación Física y Carga Sedentaria", weight:1.0,
+    desc:"Dominio 5 · Patrones de movimiento y carga sedentaria", icon:"⚡", color:"#9A6B0A", iconBg:"#FEF8E8",
+    intro:"Reflexiona sobre tu movimiento durante los últimos siete días.",
+    questions:[
+      {id:"psb1",text:"En una semana típica, ¿cuántos días experimenta tu cuerpo movimiento de moderado a vigoroso?",type:"pills",options:["0 días","1–2 días","3–4 días","5–6 días","Todos los días"]},
+      {id:"psb2",text:"Cuando estás físicamente activo/a, ¿cuánto dura una sesión típica?",type:"pills",options:["Actualmente no hago ejercicio","Menos de 20 min","20–30 min","30–60 min","Más de 60 min"]},
+      {id:"psb3",text:"¿Cuál describe mejor la forma principal de movimiento en tu vida ahora mismo?",type:"pills",options:["Ninguno actualmente","Solo caminar","Movimiento suave (yoga, estiramiento)","Cardio moderado","Entrenamiento de fuerza","Entrenamiento de alta intensidad"]},
+      {id:"psb4",text:"¿Cuántas horas de un día típico pasa tu cuerpo sentado o sedentario?",type:"pills",options:["Menos de 4 horas","4–6 horas","6–8 horas","8–10 horas","Más de 10 horas"]},
+      {id:"psb5",text:"En comparación con hace seis meses, ¿cómo ha cambiado tu patrón de movimiento?",type:"pills",options:["Mucho menos activo/a","Algo menos activo/a","Más o menos igual","Algo más activo/a","Mucho más activo/a"]},
+    ]},
+  { id:"FWL", code:"WAAM-FWL™", title:"Bienestar Funcional y Satisfacción de Vida", weight:1.1,
+    desc:"Dominio 6 · Calidad de vida, significado, conexión y función diaria", icon:"✨", color:"#6B3FA0", iconBg:"#F0EBF8",
+    intro:"Tomando distancia de los detalles, considera tu vida como un todo durante las últimas dos semanas.",
+    questions:[
+      {id:"fwl1",text:"Mirando tu vida como un todo en este momento, ¿cómo calificarías su calidad general?",type:"likert5",labels:["Muy mala","Mala","Ni buena ni mala","Buena","Muy buena"]},
+      {id:"fwl2",text:"¿Qué tan satisfecho/a estás con el estado actual de tu salud física?",type:"likert5",labels:["Muy insatisfecho/a","Insatisfecho/a","Neutral","Satisfecho/a","Muy satisfecho/a"]},
+      {id:"fwl3",text:"¿En qué grado tu vida diaria se siente conectada con significado y propósito?",type:"likert5",labels:["Para nada","Un poco","Moderadamente","Considerablemente","Completamente"]},
+      {id:"fwl4",text:"¿Qué tan nutrido/a te sientes por tus relaciones personales y tu red de apoyo?",type:"likert5",labels:["Para nada","Un poco","Moderadamente","Considerablemente","Profundamente"]},
+      {id:"fwl5",text:"¿Qué tan satisfecho/a estás con la seguridad y comodidad de tu entorno de vida?",type:"likert5",labels:["Muy insatisfecho/a","Insatisfecho/a","Neutral","Satisfecho/a","Muy satisfecho/a"]},
+      {id:"fwl6",text:"¿Cuánto interfieren las emociones difíciles — tristeza, desesperanza, preocupación — con tu funcionamiento diario?",type:"likert5",labels:["Para nada","Un poco","Moderadamente","Bastante","Extremadamente"],invert:true},
+      {id:"fwl7",text:"¿Qué tan satisfecho/a estás con tu capacidad para cumplir con tus responsabilidades cotidianas?",type:"likert5",labels:["Muy insatisfecho/a","Insatisfecho/a","Neutral","Satisfecho/a","Muy satisfecho/a"]},
+    ]},
+  { id:"SSB", code:"WAAM-SSB™", title:"Expresión Somática y Carga Corporal", weight:1.1,
+    desc:"Dominio 7 · Cómo el estrés y la emoción se expresan a través del cuerpo", icon:"🫀", color:"#C0573B", iconBg:"#FDEEE9",
+    intro:"El cuerpo a menudo expresa lo que la mente carga. En las últimas cuatro semanas, ¿qué tan presentes han estado estas experiencias físicas?",
+    questions:[
+      {id:"ssb1",text:"¿Cuánto te han afectado las dificultades digestivas — malestar estomacal, náuseas, irregularidad?",type:"likert3",labels:BOTHER3},
+      {id:"ssb2",text:"¿Cuánto han estado presentes los dolores de cabeza, migrañas o presión en la cabeza?",type:"likert3",labels:BOTHER3},
+      {id:"ssb3",text:"¿Cuánto ha pedido tu atención el dolor — espalda, articulaciones o dolores generalizados?",type:"likert3",labels:BOTHER3},
+      {id:"ssb4",text:"¿Cuánto te han preocupado las sensaciones en el pecho — opresión, palpitaciones o falta de aire?",type:"likert3",labels:BOTHER3},
+      {id:"ssb5",text:"¿Cuánto ha pesado la fatiga en tu cuerpo a lo largo del día?",type:"likert3",labels:BOTHER3},
+      {id:"ssb6",text:"¿Cuánto te han visitado los mareos, el aturdimiento o la inestabilidad?",type:"likert3",labels:BOTHER3},
+      {id:"ssb7",text:"¿Cuánto has notado tu corazón acelerado, con aleteos o latidos saltados?",type:"likert3",labels:BOTHER3},
+      {id:"ssb8",text:"¿Cuánto han estado presentes preocupaciones hormonales, menstruales o de salud íntima (si aplica)?",type:"likert3",labels:["No aplica / no presente","Mildly present","Significantly present"]},
+    ]},
+  { id:"CTX", code:"WAAM-CTX", title:"Contexto Personal", weight:0,
+    desc:"Contexto clínico para personalizar el análisis del WAAM Clinical Engine™", icon:"👤", color:"#1B6B6B", iconBg:"#E0F2F1",
+    intro:"Estas preguntas finales calibran tu análisis personalizado. Todas las respuestas permanecen privadas.",
+    questions:[
+      {id:"ctx1",text:"¿Qué rango de edad te describe?",type:"pills",options:["Menos de 18","18–25","26–35","36–45","46–55","56–65","Más de 65"]},
+      {id:"ctx2",text:"¿Alguna vez has recibido un diagnóstico de salud mental de un profesional?",type:"pills",options:["No, nunca","Posiblemente, pero sin confirmar","Sí, en el pasado","Sí, con diagnóstico actual"]},
+      {id:"ctx3",text:"¿Estás actualmente en terapia o tratamiento de salud mental?",type:"pills",options:["No","Anteriormente, pero no actualmente","Sí, ocasionalmente","Sí, activamente en tratamiento"]},
+      {id:"ctx4",text:"¿Cuánto tiempo han estado presentes estos patrones en tu vida?",type:"pills",options:["Días a semanas","1–3 meses","3–6 meses","6–12 meses","Más de un año","La mayor parte de mi vida"]},
+      {id:"ctx5",text:"¿Qué te trae a esta evaluación hoy?",type:"textarea",placeholder:"Comparte lo que tienes en mente — esto ayuda a que el análisis hable directamente a tu situación... (opcional)"},
+    ]},
+];
+
+const answers = {};
+let currentSection = -1;
+let timerInterval = null, elapsedSeconds = 0;
+
+function startTimer(){
+  document.getElementById("timerDisplay").style.display="flex";
+  timerInterval=setInterval(()=>{elapsedSeconds++;
+    const m=Math.floor(elapsedSeconds/60),s=elapsedSeconds%60;
+    document.getElementById("timerVal").textContent=`${m}:${s.toString().padStart(2,"0")}`;},1000);
+}
+function updateProgress(){
+  const pct=currentSection<0?0:Math.round(((currentSection+1)/SECTIONS.length)*100);
+  document.getElementById("progressFill").style.width=pct+"%";
+}
+function render(){
+  updateProgress();
+  if(currentSection===-1){renderIntro();return}
+  if(currentSection>=SECTIONS.length){renderResults();return}
+  renderSection(SECTIONS[currentSection]);
+}
+
+function renderIntro(){
+  document.getElementById("mainContent").innerHTML=`
+    <div class="intro-screen">
+      <div class="waam-mark">
+        <div class="wm-title">WAAM<span class="wm-tm">™</span></div>
+        <div class="wm-sub">Método de Evaluación Wholistically Aligned</div>
+      </div>
+      <div class="intro-badge"><span>⏱</span> 12–15 minutos · 48 ítems clínicos · 7 dominios de bienestar</div>
+      <h1 class="intro-title">Una Evaluación Integral de Bienestar,<br>Diseñada por Especialistas en Psiquiatría</h1>
+      <p class="intro-sub">La WAAM™ evalúa siete dimensiones interconectadas del bienestar mental y físico mediante un modelo propietario de ponderación clínica. Tus respuestas generan una Puntuación de Bienestar Integral™ y un análisis personalizado del WAAM Clinical Engine™ — incluyendo rutas terapéuticas y apoyos naturales con base científica.</p>
+      <div class="intro-domains">
+        ${SECTIONS.filter(s=>s.weight>0).map(s=>`<div class="intro-domain"><div class="intro-domain-code">${s.code}</div><span class="intro-domain-icon">${s.icon}</span><div class="intro-domain-name">${s.title}</div></div>`).join("")}
+      </div>
+      <div class="intro-disclaimer"><strong>⚠ Uso Psicoeducativo:</strong> La WAAM™ es una herramienta de educación en bienestar desarrollada bajo la dirección clínica de una proveedora psiquiátrica certificada. No es un instrumento diagnóstico. Los resultados deben revisarse con un profesional licenciado antes de cualquier decisión de salud.</div>
+      <button class="btn-primary" onclick="window.waamBegin()">Comenzar la WAAM™ <span>→</span></button>
+    </div>`;
+}
+function begin(){currentSection=0;startTimer();render()}
+
+function renderSection(sec){
+  const isFirst=currentSection===0, isLast=currentSection===SECTIONS.length-1;
+  document.getElementById("mainContent").innerHTML=`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px">
+      <span style="font-size:13px;color:var(--mid)">Dominio ${currentSection+1} de ${SECTIONS.length}</span>
+      <span style="flex:1;height:2px;background:#E8EEE8"></span>
+      <span style="font-size:13px;font-weight:500;color:var(--teal)">${sec.code}</span>
+    </div>
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon" style="background:${sec.iconBg}">${sec.icon}</div>
+        <div>
+          <div class="section-title">${sec.title}</div>
+          <div class="section-code">${sec.code}</div>
+          <div class="section-desc">${sec.desc}</div>
+        </div>
+      </div>
+      <div class="section-body">
+        <p style="font-size:13px;color:var(--mid);margin-bottom:24px;line-height:1.6;padding:12px 14px;background:#F7FAF8;border-radius:8px;border-left:3px solid ${sec.color}">${sec.intro}</p>
+        ${sec.questions.map((q,qi)=>renderQuestion(q,qi)).join("")}
+      </div>
+    </div>
+    <div class="nav-row">
+      ${!isFirst?`<button class="btn-nav" onclick="window.waamPrev()">← Atrás</button>`:`<span></span>`}
+      <button class="btn-nav btn-nav-primary" onclick="window.waamNext()">${isLast?"Generar Mis Resultados WAAM™ →":"Continuar →"}</button>
+    </div>`;
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function renderQuestion(q,qi){
+  const num=qi+1; let input="";
+  if(q.type==="likert4"||q.type==="likert5"||q.type==="likert3"){
+    input=`<div class="likert" id="q_${q.id}">${q.labels.map((lbl,i)=>`
+      <div class="likert-opt ${answers[q.id]==i?'selected':''}" onclick="window.waamSetAnswer('${q.id}',${i},this,'likert')">
+        <span class="opt-num">${i}</span><span class="opt-lbl">${lbl}</span>
+      </div>`).join("")}</div>`;
+  } else if(q.type==="pills"){
+    input=`<div class="radio-pills" id="q_${q.id}">${q.options.map(opt=>`
+      <div class="radio-pill ${answers[q.id]===opt?'selected':''}" onclick="window.waamSetAnswer('${q.id}','${opt.replace(/'/g,"\\'")}',this,'pill')">${opt}</div>`).join("")}</div>`;
+  } else if(q.type==="textarea"){
+    input=`<textarea id="q_${q.id}" placeholder="${q.placeholder||''}" oninput="window.waamAnswers['${q.id}']=this.value">${answers[q.id]||""}</textarea>`;
+  }
+  return `<div class="q-block">
+    <div class="q-label"><span class="q-num">${num}</span><span>${q.text}</span></div>
+    ${input}
+    <div class="val-msg" id="val_${q.id}">Por favor responde este ítem para continuar.</div>
+  </div>`;
+}
+
+function setAnswer(qid,val,el,type){
+  answers[qid]=val;
+  const c=document.getElementById("q_"+qid);
+  c.querySelectorAll(type==="pill"?".radio-pill":".likert-opt").forEach(e=>e.classList.remove("selected"));
+  el.classList.add("selected");
+  document.getElementById("val_"+qid)?.classList.remove("show");
+}
+function nextSection(){
+  const sec=SECTIONS[currentSection]; let valid=true;
+  sec.questions.forEach(q=>{
+    if(q.type==="textarea")return;
+    const vm=document.getElementById("val_"+q.id);
+    if(answers[q.id]===undefined||answers[q.id]===null||answers[q.id]===""){vm?.classList.add("show");valid=false}
+    else vm?.classList.remove("show");
+  });
+  if(!valid){document.querySelector(".val-msg.show")?.scrollIntoView({behavior:"smooth",block:"center"});return}
+  currentSection++;
+  if(currentSection>=SECTIONS.length && !leadCaptured){renderEmailGate();return}
+  render();
+}
+function prevSection(){if(currentSection>0){currentSection--;render()}}
+
+// ── WAAM Clinical Engine™: proprietary weighted scoring ──
+function pillScore(qid,options,map){const i=options.indexOf(answers[qid]);return i>=0?map[i]:map[Math.floor(map.length/2)]}
+
+function computeWAAM(){
+  const d={};
+  // ARM: 9 items × 0–3 = 27 max
+  d.ARM = ["arm1","arm2","arm3","arm4","arm5","arm6","arm7","arm8","arm9"].reduce((s,k)=>s+(Number(answers[k])||0),0);
+  // ATS: 7 × 3 = 21
+  d.ATS = ["ats1","ats2","ats3","ats4","ats5","ats6","ats7"].reduce((s,k)=>s+(Number(answers[k])||0),0);
+  // SRF: burden scoring, max 18
+  d.SRF =
+    pillScore("srf1",["Menos de 5h","5–6 horas","6–7 horas","7–8 horas","Más de 8h"],[3,2,1,0,2]) +
+    pillScore("srf2",["Menos de 15 min","15–30 min","30–60 min","Más de 60 min"],[0,1,2,3]) +
+    pillScore("srf3",["Para nada","Menos de una vez/semana","1–2 veces/semana","3+ veces/semana"],[0,1,2,3]) +
+    (4-(Number(answers["srf4"])||2))*0.75 +
+    pillScore("srf5",["Nunca","Menos de una vez/semana","1–2 veces/semana","3+ veces/semana"],[0,1,2,3]) +
+    pillScore("srf6",["Nunca","Rara vez","A veces","Con frecuencia","Casi siempre"],[0,0,1,2,3]);
+  // NBM: max 16
+  d.NBM =
+    pillScore("nbm1",["0–1 porciones","2–3 porciones","4–5 porciones","6+ porciones"],[3,2,1,0]) +
+    pillScore("nbm2",["Rara vez / nunca","1–2 veces/semana","3–5 veces/semana","Diario","Varias veces al día"],[0,1,2,3,4]) +
+    pillScore("nbm3",["Rara vez","A veces","La mayoría de las comidas","Casi siempre"],[3,2,1,0]) +
+    pillScore("nbm4",["Muy disminuido","Algo reducido","Bien equilibrado","Algo elevado","Muy elevado o compulsivo"],[2,1,0,1,3]) +
+    pillScore("nbm5",["Nunca","Rara vez","1–2 veces/semana","La mayoría de los días"],[0,1,2,3]);
+  // PSB: max 12
+  d.PSB =
+    pillScore("psb1",["0 días","1–2 días","3–4 días","5–6 días","Todos los días"],[4,3,2,1,0]) +
+    pillScore("psb2",["Actualmente no hago ejercicio","Menos de 20 min","20–30 min","30–60 min","Más de 60 min"],[4,3,2,1,0]) +
+    pillScore("psb4",["Menos de 4 horas","4–6 horas","6–8 horas","8–10 horas","Más de 10 horas"],[0,1,2,3,4]);
+  // FWL: 6 positively-scored items inverted + 1 negative item, max 28
+  const fwlPos=["fwl1","fwl2","fwl3","fwl4","fwl5","fwl7"].reduce((s,k)=>s+(Number(answers[k])||0),0);
+  d.FWL=(24-fwlPos)+(Number(answers["fwl6"])||0);
+  // SSB: 8 × 2 = 16
+  d.SSB=["ssb1","ssb2","ssb3","ssb4","ssb5","ssb6","ssb7","ssb8"].reduce((s,k)=>s+(Number(answers[k])||0),0);
+
+  const MAX={ARM:27,ATS:21,SRF:18,NBM:16,PSB:12,FWL:28,SSB:16};
+  const W={ARM:1.4,ATS:1.3,SRF:1.2,NBM:1.0,PSB:1.0,FWL:1.1,SSB:1.1};
+  const pct={};Object.keys(MAX).forEach(k=>pct[k]=Math.min(100,Math.round((d[k]/MAX[k])*100)));
+
+  // WAAM Index™: weighted composite burden with cross-domain amplifiers
+  let wSum=0,wTot=0;
+  Object.keys(W).forEach(k=>{wSum+=pct[k]*W[k];wTot+=W[k]});
+  let burden=wSum/wTot;
+  const amps=[];
+  if(pct.ARM>60&&pct.SRF>60){burden*=1.08;amps.push("Interacción Ánimo–Sueño (+8%)")}
+  if(pct.ARM>60&&pct.ATS>60){burden*=1.06;amps.push("Comorbilidad Ánimo–Ansiedad (+6%)")}
+  if(pct.ATS>60&&pct.SRF>60){burden*=1.05;amps.push("Interacción Ansiedad–Sueño (+5%)")}
+  if(pct.ARM>70&&pct.ATS>70&&pct.SRF>70){burden*=1.06;amps.push("Elevación de triple dominio (+6%)")}
+  burden=Math.min(100,burden);
+
+  const wws=Math.max(0,Math.round(100-burden));
+  const tier=wws>=80?{name:"Floreciendo",tag:"flourishing",color:"#2E7D52",bg:"#E8F5EE"}
+    :wws>=65?{name:"Bienestar Funcional",tag:"functional-wellness",color:"#4DB6AC",bg:"#E0F2F1"}
+    :wws>=50?{name:"Malestar Emergente",tag:"emerging-distress",color:"#9A6B0A",bg:"#FEF8E8"}
+    :wws>=35?{name:"Deterioro Significativo",tag:"significant-impairment",color:"#C0573B",bg:"#FDEEE9"}
+    :{name:"Necesidad Clínica Aguda",tag:"acute-clinical-need",color:"#8B1C1C",bg:"#FCE8E8"};
+
+  return {raw:d,pct,wws,tier,amps,siFlag:(Number(answers["arm9"])||0)>0};
+}
+
+function sevFor(p){return p<=25?["Carga baja","low"]:p<=45?["Carga leve","mild"]:p<=65?["Carga moderada","mod"]:["Carga alta","severe"]}
+
+let leadCaptured=false, leadName="", leadEmail="";
+
+function renderEmailGate(){
+  clearInterval(timerInterval);
+  updateProgress();
+  document.getElementById("mainContent").innerHTML=`
+    <div class="gate-card">
+      <div style="font-size:38px;margin-bottom:14px">🎉</div>
+      <h2 style="font-family:'DM Serif Display',serif;font-size:26px;margin-bottom:10px">Tus Resultados WAAM™ Están Listos</h2>
+      <p style="font-size:14px;color:var(--gray);line-height:1.7;margin-bottom:24px">Ingresa tus datos para acceder a tu Puntuación de Bienestar Integral™, tu análisis personalizado del Clinical Engine™ y tu ruta de programa recomendada.</p>
+      <input class="gate-input" id="leadName" type="text" placeholder="Nombre" autocomplete="given-name">
+      <input class="gate-input" id="leadEmail" type="email" placeholder="Correo electrónico" autocomplete="email">
+      <label class="gate-consent">
+        <input type="checkbox" id="leadConsent" style="margin-top:2px">
+        <span>Acepto recibir mis resultados y orientación de bienestar de Wholistically Aligned por correo electrónico. Cancela cuando quieras. Tus respuestas permanecen privadas y nunca se venden.</span>
+      </label>
+      <button class="btn-primary" style="width:100%;justify-content:center" onclick="window.waamSubmitLead()">Ver Mis Resultados →</button>
+      <div class="val-msg" id="gateVal" style="margin-top:10px;text-align:center">Por favor ingresa tu nombre, un correo válido y marca la casilla de consentimiento.</div>
+    </div>`;
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function submitLead(){
+  const n=document.getElementById("leadName").value.trim();
+  const e=document.getElementById("leadEmail").value.trim();
+  const c=document.getElementById("leadConsent").checked;
+  if(!n||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)||!c){document.getElementById("gateVal").classList.add("show");return}
+  leadName=n;leadEmail=e;leadCaptured=true;
+  const R=computeWAAM();
+  const route=routeWAAM(R);
+  try{localStorage.setItem("waam_baseline",JSON.stringify({pct:R.pct,wws:R.wws,date:new Date().toISOString().slice(0,10)}))}catch(e){}
+    // Opt-in + captura de email a traves del proxy de Kajabi (los secretos quedan
+  // en el servidor). El proxy envia el formulario del idioma -> suscribe al contacto
+  // -> la Automatizacion de Kajabi agrega la etiqueta y dispara la secuencia.
+  // NOTA: el proxy actual solo guarda nombre + email + idioma. Los campos WAAM extra
+  // se envian (inofensivo) para estar listos el dia que se amplie el proxy — hoy NO se guardan.
+  try{
+    fetch(KAJABI_PROXY_URL,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        name:n, email:e, lang:KAJABI.LANGUAGE,
+        customFields:{
+          assessment_language:KAJABI.LANGUAGE,
+          waam_tier:R.tier.tag,
+          waam_track:route.primary.key,
+          waam_wws:String(R.wws),
+          waam_domains:["ARM","ATS","SRF","NBM","PSB","FWL","SSB"].map(k=>k+R.pct[k]).join("|"),
+          waam_type:"baseline"
+        }
+      })
+    }).catch(()=>{});
+  }catch(err){/* la captura nunca debe bloquear los resultados */}
+  render();
+}
+
+// ── Foundation-first routing engine ──
+function routeWAAM(R){
+  const p=R.pct, EL=60;
+  let primary;
+  if(p.ARM>=EL&&p.ATS>=EL)      primary={key:"dbt",offer:"dbt",icon:"🧭",name:"Regulación Emocional DBT",why:"Tus dominios de ánimo y ansiedad están ambos elevados — las habilidades DBT de tolerancia al malestar y regulación emocional (TIPP, ACCEPTS) fueron creadas precisamente para esta combinación."};
+  else if(p.ARM>=EL)            primary={key:"mbsr-er-mood",offer:"mbsrER",icon:"☁️",name:"Regulación Emocional MBSR",why:"Tu dominio del ánimo carga el mayor peso — la activación conductual mediante participación consciente de este programa aborda directamente el ánimo bajo y la energía agotada. (Una serie dedicada de TCC llegará pronto.)"};
+  else if(p.ATS>=EL)            primary={key:"mbsr-er-anxiety",offer:"mbsrER",icon:"🌀",name:"Regulación Emocional MBSR",why:"Tu dominio de ansiedad está elevado — las prácticas de descentramiento de la preocupación y regulación del sistema nervioso son tu mejor opción actual. (Una serie de ACT llegará pronto.)"};
+  else if(p.NBM>=EL)            primary={key:"mindful-eating",offer:"eating",icon:"🌿",name:"Alimentación Consciente — Serie de 8 Semanas",why:"Tu dominio de nutrición muestra la mayor carga — este programa dedicado sana tu relación con la comida, el hambre y la nutrición. Disponible en español e inglés."};
+  else if(p.SSB>=EL)            primary={key:"mbsr-er-somatic",offer:"mbsrER",icon:"🫀",name:"Regulación Emocional MBSR (Énfasis en Escaneo Corporal)",why:"Tu cuerpo carga una expresión significativa del estrés — las prácticas de escaneo corporal y conciencia somática son la respuesta con base científica."};
+  else if(p.FWL>=EL)            primary={key:"mbsr-er-meaning",offer:"mbsrER",icon:"✨",name:"Regulación Emocional MBSR (Ruta de Bondad Amorosa)",why:"Tu dominio de satisfacción de vida está elevado — las prácticas de bondad amorosa y valores reconstruyen el significado y la conexión."};
+  else if(p.SRF>=EL)            primary={key:"mbsr-sleep",offer:"foundation",icon:"🌙",name:"Base MBSR (Prioridad de Sueño)",why:"El sueño carga tu mayor peso — las prácticas reparadoras de la base se secuenciarán para priorizar tu arquitectura del sueño."};
+  else                          primary={key:"growth",offer:"foundation",icon:"🌱",name:"Ruta de Crecimiento a Tu Elección",why:"Ningún dominio muestra carga significativa — estás en posición de elegir la ruta de crecimiento que más te llame."};
+
+  const secondary=(p.NBM>=EL&&primary.key!=="mindful-eating")?{key:"mindful-eating",offer:"eating",icon:"🌿",name:"Alimentación Consciente — Serie de 8 Semanas",why:"Tu dominio de nutrición también está elevado — funciona muy bien como programa de segunda fase."}:null;
+
+  const w=R.wws;
+  const foundation=
+    w>=80?{mode:"optional",label:"Enriquecimiento Opcional",desc:"Tu Introducción de 12 Semanas a MBSR es opcional en tu nivel de bienestar — pero recomendada como la base que profundiza toda otra práctica."}
+    :w>=50?{mode:"sequential",label:"Comienza Aquí — Tu Base",desc:"Comienza con el Núcleo MBSR de 8 semanas; luego tu Puente de Integración de 4 semanas te lleva directamente a tu ruta recomendada — un solo camino continuo de 12 semanas."}
+    :w>=35?{mode:"parallel",label:"Base + Ruta Juntas",desc:"Tomarás un Núcleo MBSR condensado de 4 semanas junto a tu ruta recomendada — construyendo la base sin retrasar el apoyo individualizado que necesitas ahora."}
+    :{mode:"parallel-care",label:"Base + Ruta + Atención Profesional",desc:"Un Núcleo MBSR condensado acompaña tu ruta recomendada. En tu nivel actual de carga, también te animamos calurosamente a conectar con un profesional licenciado — tus programas funcionan mejor como complemento de la atención."};
+
+  return {primary,secondary,foundation};
+}
+
+async function renderResults(){
+  clearInterval(timerInterval);
+  const R=computeWAAM();
+  const route=routeWAAM(R);
+  window._WAAM_R=R;
+  const names={ARM:"Regulación Afectiva y Ánimo",ATS:"Ansiedad y Amenaza",SRF:"Sueño y Función Reparadora",NBM:"Nutrición y Metabolismo",PSB:"Activación Física",FWL:"Bienestar Funcional",SSB:"Expresión Somática"};
+
+  document.getElementById("mainContent").innerHTML=`
+    <div class="results-header">
+      <h2 class="results-title">Tus Resultados WAAM™</h2>
+      <p class="results-sub">Completado en ${Math.floor(elapsedSeconds/60)}m ${elapsedSeconds%60}s · ${new Date().toLocaleDateString()}</p>
+    </div>
+    <div class="wws-hero">
+      <div class="wws-label">Puntuación de Bienestar Integral™ · WWS™</div>
+      <div class="wws-value">${R.wws}</div>
+      <div style="font-size:13px;opacity:.7;margin-top:2px">de 100</div>
+      <div class="wws-tier" style="background:${R.tier.bg};color:${R.tier.color}">${R.tier.name}</div>
+      ${R.amps.length?`<div style="font-size:11.5px;opacity:.65;margin-top:14px">Amplificadores del WAAM Index™ aplicados: ${R.amps.join(" · ")}</div>`:""}
+    </div>
+    ${R.siFlag?`<div style="background:#FCE8E8;border:1.5px solid #E5A0A0;border-radius:12px;padding:16px 20px;font-size:14px;color:#8B1C1C;line-height:1.7;margin-bottom:24px"><strong>Una nota de cuidado:</strong> Indicaste pensamientos de hacerte daño o de que la vida quizás no vale la pena. Por favor, ten presente que hay apoyo disponible ahora mismo — llama o envía un mensaje de texto al <strong>988</strong> (disponible en español, 24/7), o envía <strong>HOLA al 741741</strong>. Mereces apoyo, y pedirlo es una señal de fortaleza.</div>`:""}
+    <div class="score-grid">
+      ${Object.keys(names).map(k=>{const [sev,cls]=sevFor(R.pct[k]);return `
+        <div class="score-card">
+          <div class="score-code">WAAM-${k}™</div>
+          <div class="score-label">${names[k]}</div>
+          <div class="score-bar-wrap"><div class="score-bar bar-${cls}" style="width:${R.pct[k]}%"></div></div>
+          <div class="score-val severity-${cls}">${R.pct[k]}%</div>
+          <div class="score-sev">${sev}</div>
+        </div>`}).join("")}
+    </div>
+    <div style="margin-bottom:28px">
+      <h3 style="font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:4px">Tu Camino Alineado${leadName?", "+leadName:""}</h3>
+      <p style="font-size:13.5px;color:var(--mid);margin-bottom:18px">Diseñado según tu perfil WAAM™ por nuestro motor de rutas con base en la fundación.</p>
+      <div class="rec-card primary">
+        <div class="rec-icon">🧘</div>
+        <div style="flex:1">
+          <span class="rec-badge" style="background:var(--teal-lt);color:var(--teal)">${route.foundation.label}</span>
+          <div class="rec-title">Introducción de 12 Semanas a MBSR</div>
+          <div class="rec-why">${route.foundation.desc}</div>
+          <a class="rec-cta" href="${KAJABI.OFFERS.foundation}" target="_blank">Comienza Tu Base — $149 para empezar, luego $59/mes</a>
+        </div>
+      </div>
+      <div class="rec-card">
+        <div class="rec-icon">${route.primary.icon}</div>
+        <div style="flex:1">
+          <span class="rec-badge" style="background:var(--plum-lt);color:var(--plum)">Tu Ruta Recomendada</span>
+          <div class="rec-title">${route.primary.name}</div>
+          <div class="rec-why">${route.primary.why}</div>
+          <a class="rec-cta ghost" href="${KAJABI.OFFERS[route.primary.offer]}" target="_blank">${route.foundation.mode.startsWith("parallel")?"Comienza Junto a Tu Base":"Conoce Tu Ruta"}</a>
+        </div>
+      </div>
+      ${route.secondary?`<div class="rec-card">
+        <div class="rec-icon">${route.secondary.icon}</div>
+        <div style="flex:1">
+          <span class="rec-badge" style="background:var(--sage-lt);color:var(--sage)">También Recomendada</span>
+          <div class="rec-title">${route.secondary.name}</div>
+          <div class="rec-why">${route.secondary.why}</div>
+          <a class="rec-cta ghost" href="${KAJABI.OFFERS[route.secondary.offer]}" target="_blank">Conoce Este Programa</a>
+        </div>
+      </div>`:""}
+    </div>
+    <div class="ai-card">
+      <div class="ai-card-header"><span style="font-size:20px">🧠</span><h3>Análisis del WAAM Clinical Engine™</h3></div>
+      <div class="ai-card-body">
+        <div class="loading-wrap" id="aiLoading">
+          <div class="spinner"></div>
+          <div class="loading-text">El WAAM Clinical Engine™ está analizando tu perfil<span class="loading-dots"></span></div>
+          <div style="font-size:12px;color:var(--mid);margin-top:8px">15–30 segundos</div>
+        </div>
+        <div id="aiResults" style="display:none"></div>
+      </div>
+    </div>
+    <div class="ai-card" id="goalsCard" style="display:none">
+      <div class="ai-card-header" style="background:var(--teal-dark)"><span style="font-size:20px">🎯</span><h3>Tu Plan de Acción Alineada™ — Metas S.M.A.R.T.</h3></div>
+      <div class="ai-card-body">
+        <div class="loading-wrap" id="goalsLoading">
+          <div class="spinner"></div>
+          <div class="loading-text">Traduciendo tu perfil en metas S.M.A.R.T.<span class="loading-dots"></span></div>
+        </div>
+        <div id="goalsResults" style="display:none"></div>
+      </div>
+    </div>
+    <div class="ai-card" id="ndCard">
+      <div class="ai-card-header" style="background:var(--plum)"><span style="font-size:20px">🧩</span><h3>Opcional: Perspectivas de Neurodivergencia™</h3></div>
+      <div class="ai-card-body" id="ndBody">
+        <p style="font-size:14px;line-height:1.7;color:var(--gray);margin-bottom:8px">Muchos adultos descubren que la carga persistente de ansiedad, ánimo o sueño se asienta sobre diferencias de atención o rasgos autistas no reconocidos. Este cuestionario opcional de 24 ítems explora la atención y función ejecutiva, la impulsividad, los patrones de la infancia, la comunicación social, la experiencia sensorial y el enmascaramiento — de forma privada, y sin afectar tu Puntuación de Bienestar Integral™.</p>
+        <p style="font-size:12.5px;color:var(--mid);margin-bottom:16px">Los rasgos son diferencias, no déficits. Esto es educación y autoconocimiento — no un diagnóstico.</p>
+        <button class="btn-goals" onclick="window.waamStartND()">Explorar Mis Patrones · 24 ítems, ~5 min</button>
+      </div>
+    </div>
+    <div style="background:var(--amber-lt);border:1px solid #F0D090;border-radius:12px;padding:16px 20px;font-size:13px;color:var(--amber);line-height:1.7">
+      <strong>Importante:</strong> Tus resultados WAAM™ son conocimientos psicoeducativos, no un diagnóstico clínico. Revísalos con un profesional licenciado de salud mental o medicina antes de tomar decisiones de salud. En crisis, llama o envía un mensaje de texto al <strong>988</strong>.
+    </div>`;
+  await generateAnalysis(R);
+}
+
+async function generateAnalysis(R){
+  const prompt=`Eres el WAAM Clinical Engine™, la capa de análisis del Método de Evaluación Wholistically Aligned™ — una evaluación propietaria de bienestar integral desarrollada bajo la dirección clínica de una proveedora psiquiátrica certificada. Proporcionas análisis psicoeducativo, nunca diagnóstico. RESPONDE COMPLETAMENTE EN ESPAÑOL, con un tono cálido, claro y culturalmente sensible.
+
+PUNTUACIONES DE CARGA POR DOMINIO WAAM™ (0–100%, mayor = mayor carga):
+- WAAM-ARM™ Regulación Afectiva y Ánimo: ${R.pct.ARM}%
+- WAAM-ATS™ Ansiedad y Sensibilidad a la Amenaza: ${R.pct.ATS}%
+- WAAM-SRF™ Arquitectura del Sueño y Función Reparadora: ${R.pct.SRF}%
+- WAAM-NBM™ Conducta Nutricional y Bienestar Metabólico: ${R.pct.NBM}%
+- WAAM-PSB™ Activación Física y Carga Sedentaria: ${R.pct.PSB}%
+- WAAM-FWL™ Bienestar Funcional y Satisfacción de Vida: ${R.pct.FWL}%
+- WAAM-SSB™ Expresión Somática y Carga Corporal: ${R.pct.SSB}%
+PUNTUACIÓN DE BIENESTAR INTEGRAL™: ${R.wws}/100 — Nivel: ${R.tier.name}
+Amplificadores entre dominios detectados: ${R.amps.length?R.amps.join("; "):"ninguno"}
+${R.siFlag?"NOTA DE SEGURIDAD: Se indicaron pensamientos de autolesión. Integra recursos de crisis (988 disponible en español; envía HOLA al 741741) con delicadeza pero claridad, y prioriza la seguridad.":""}
+
+SALIDA DEL MOTOR DE RUTAS (tu sección de Ruta Terapéutica DEBE alinearse con esto — mismo modo de base, mismo programa recomendado):
+- Modo de base: ${routeWAAM(R).foundation.mode} — ${routeWAAM(R).foundation.label}
+- Ruta recomendada: ${routeWAAM(R).primary.name}
+${routeWAAM(R).secondary?"- Secundaria: "+routeWAAM(R).secondary.name:""}
+
+CONTEXTO PERSONAL:
+- Rango de edad: ${answers["ctx1"]||"no especificado"}
+- Diagnóstico previo: ${answers["ctx2"]||"no especificado"}
+- Actualmente en terapia: ${answers["ctx3"]||"no especificado"}
+- Duración de los síntomas: ${answers["ctx4"]||"no especificado"}
+- Motivo expresado: ${answers["ctx5"]||"no proporcionado"}
+
+Genera un análisis WAAM™ cálido y clínicamente informado con exactamente estas secciones:
+
+## TU PANORAMA DE BIENESTAR
+2–3 oraciones compasivas que describan la presentación general y cómo se interconectan los dominios elevados. Usa lenguaje psicoeducativo ("un patrón consistente con...") — nunca etiquetas diagnósticas aplicadas a la persona.
+
+## PRESENTACIONES PARA EXPLORAR CON UN PROFESIONAL
+2–4 presentaciones clínicas que un profesional podría evaluar, formuladas educativamente.
+
+## TU RUTA TERAPÉUTICA
+Aplica el modelo de base-primero de Wholistically Aligned. SIEMPRE comienza con la recomendación de base calibrada según su nivel WWS™:
+- Floreciendo (80–100): la Introducción de 12 Semanas a MBSR es opcional pero recomendada como base de enriquecimiento.
+- Bienestar Funcional (65–79) o Malestar Emergente (50–64): completar primero el Núcleo MBSR de 8 semanas; el Puente de Integración de 4 semanas los lleva a su ruta recomendada.
+- Deterioro Significativo (35–49): un Núcleo MBSR condensado de 4 semanas EN PARALELO con su ruta recomendada — no deben esperar 12 semanas para apoyo individualizado.
+- Necesidad Clínica Aguda (0–34): Núcleo MBSR en paralelo con su ruta, MÁS un aliento claro y cálido a buscar también atención profesional ahora.
+Luego nombra su(s) programa(s) recomendado(s) — Regulación Emocional DBT, Regulación Emocional MBSR o Alimentación Consciente (disponible en español) — explica en una oración por qué ese programa encaja con su patrón exacto de puntuaciones, y describe la secuencia base→ruta como un solo camino coherente. Menciona que las series de TCC y ACT llegarán pronto cuando sea relevante.
+
+## APOYOS NATURALES CON EVIDENCIA CIENTÍFICA
+4–6 suplementos con respaldo científico relevantes a los dominios elevados. Para cada uno: nombre y forma, qué muestra la investigación (breve), y precauciones o interacciones clave a verificar con un proveedor.
+
+## CAMBIOS DE ESTILO DE VIDA ALINEADOS
+4–6 cambios específicos y accionables dirigidos a los dominios de mayor carga. Prácticos, no genéricos.
+
+## TUS PRÓXIMOS 7 DÍAS
+2–3 oraciones de aliento genuino, luego 3 pasos concretos para esta semana.
+
+Sé cálido/a, específico/a y directo/a. Sin descargo de responsabilidad al final.`;
+
+  try{
+    const res=await fetch(WAAM_PROXY_URL,{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:4000,messages:[{role:"user",content:prompt}]})
+    });
+    if(!res.ok)throw new Error(`API error: ${res.status}`);
+    const data=await res.json();
+    const text=data.content?.[0]?.text||"Unable to generate analysis.";
+    document.getElementById("aiLoading").style.display="none";
+    document.getElementById("aiResults").style.display="block";
+    document.getElementById("aiResults").innerHTML=formatAI(text);
+    generateSmartGoals(R);
+  }catch(err){
+    document.getElementById("aiLoading").style.display="none";
+    document.getElementById("aiResults").style.display="block";
+    document.getElementById("aiResults").innerHTML=`<div style="text-align:center;padding:24px;color:var(--mid)">
+      <div style="font-size:28px;margin-bottom:12px">⚠️</div>
+      <div style="font-size:14px">Análisis no disponible. Verifica tu conexión e intenta de nuevo.</div>
+      <div style="font-size:12px;margin-top:8px;color:var(--coral)">${err.message}</div></div>`;
+  }
+}
+
+function formatAI(text){
+  const CFG={
+    "TU PANORAMA DE BIENESTAR":{icon:"🔍",color:"var(--ocean)",bg:"var(--ocean-lt)"},
+    "PRESENTACIONES PARA EXPLORAR CON UN PROFESIONAL":{icon:"📋",color:"var(--plum)",bg:"var(--plum-lt)"},
+    "TU RUTA TERAPÉUTICA":{icon:"💬",color:"var(--teal)",bg:"var(--teal-lt)"},
+    "APOYOS NATURALES CON EVIDENCIA CIENTÍFICA":{icon:"🌿",color:"var(--sage)",bg:"var(--sage-lt)"},
+    "CAMBIOS DE ESTILO DE VIDA ALINEADOS":{icon:"⚡",color:"var(--gold)",bg:"var(--gold-lt)"},
+    "TUS PRÓXIMOS 7 DÍAS":{icon:"✨",color:"var(--teal)",bg:"var(--teal-lt)"},
+  };
+  let html="";
+  const parts=text.trim().split(/^##\s+/m).filter(p=>p.trim());
+  // Drop any preamble before the first '## ' heading (the model sometimes
+  // opens with an H1), so it doesn't render as a stray untitled section.
+  if(parts.length && !/^##/.test(text.trim())) parts.shift();
+  parts.forEach(part=>{
+    const title=part.split("\n")[0].trim().replace(/[*]/g,"");
+    const cfg=CFG[title.toUpperCase()]||{icon:"📌",color:"var(--teal)",bg:"var(--teal-lt)"};
+    const content=part.split("\n").slice(1).join("\n").trim();
+    const fm=content.split("\n").map(l=>{l=l.trim();if(!l)return"";
+      if(l.startsWith("- ")||l.startsWith("• "))return `<li>${l.slice(2).replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>")}</li>`;
+      return `<p>${l.replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>")}</p>`;
+    }).join("");
+    const body=fm.includes("<li>")?fm.replace(/(<li>.*?<\/li>)+/gs,m=>`<ul style="padding-left:20px;margin:8px 0">${m}</ul>`):fm;
+    html+=`<div class="ai-section">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:12px 16px;background:${cfg.bg};border-radius:10px">
+        <span style="font-size:18px">${cfg.icon}</span>
+        <span style="font-size:14px;font-weight:600;color:${cfg.color}">${title}</span>
+      </div>
+      <div class="ai-content" style="padding:0 4px">${body}</div>
+    </div>`;
+  });
+  return html||`<div class="ai-content"><p>${text.replace(/\n/g,"<br>")}</p></div>`;
+}
+
+// ── Aligned Action Plan™: S.M.A.R.T. goal generation ──
+async function generateSmartGoals(R){
+  const card=document.getElementById("goalsCard");
+  card.style.display="block";
+  card.scrollIntoView({behavior:"smooth",block:"nearest"});
+  const prompt=`Eres el módulo de generación de metas del WAAM Clinical Engine™. Con base en este perfil de bienestar WAAM™, genera exactamente 5 metas S.M.A.R.T. — una para cada área de vida: Ánimo, Sueño, Movimiento, Nutrición, Relaciones. ESCRIBE TODO EN ESPAÑOL.
+
+CARGA POR DOMINIO (0-100%, mayor = mayor carga):
+Ánimo ${R.pct.ARM}% | Ansiedad ${R.pct.ATS}% | Sueño ${R.pct.SRF}% | Nutrición ${R.pct.NBM}% | Movimiento ${R.pct.PSB}% | Satisfacción de Vida ${R.pct.FWL}% | Somático ${R.pct.SSB}%
+Contexto: edad ${answers["ctx1"]||"no especificada"}, duración de síntomas ${answers["ctx4"]||"no especificada"}, motivo: ${answers["ctx5"]||"ninguno"}
+
+Calibra la ambición según el nivel de carga — los dominios de alta carga reciben metas iniciales suaves y muy alcanzables; los dominios de baja carga reciben metas de crecimiento. Las metas deben ser conductas concretas, no resultados ("caminar 10 minutos después del almuerzo", no "sentirme más feliz").
+
+Responde SOLO con un arreglo JSON, sin marcas de markdown, sin preámbulo. Los nombres de dominio deben ser exactamente: Ánimo, Sueño, Movimiento, Nutrición, Relaciones:
+[{"domain":"Ánimo","goal":"<enunciado de la meta en una oración>","S":"<qué específicamente>","M":"<cómo se mide>","A":"<por qué es alcanzable para esta persona>","R":"<por qué es relevante a su perfil>","T":"<plazo>"}, ...]`;
+  try{
+    const res=await fetch(WAAM_PROXY_URL,{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1500,messages:[{role:"user",content:prompt}]})
+    });
+    if(!res.ok)throw new Error(`API error: ${res.status}`);
+    const data=await res.json();
+    let text=(data.content?.[0]?.text||"").replace(/```json|```/g,"").trim();
+    const goals=JSON.parse(text);
+    renderGoals(goals);
+  }catch(err){
+    document.getElementById("goalsLoading").style.display="none";
+    document.getElementById("goalsResults").style.display="block";
+    document.getElementById("goalsResults").innerHTML=`<div style="text-align:center;padding:20px;color:var(--mid);font-size:14px">Generación de metas no disponible ahora — puedes reintentar al recargar la página. (${err.message})</div>`;
+  }
+}
+
+function renderGoals(goals){
+  const icons={"Ánimo":"☁️","Sueño":"🌙","Movimiento":"⚡","Nutrición":"🌿","Relaciones":"🤝"};
+  document.getElementById("goalsLoading").style.display="none";
+  const wrap=document.getElementById("goalsResults");
+  wrap.style.display="block";
+  wrap.innerHTML=`
+    <p class="goal-hint">✏️ Cada meta es editable — haz clic en cualquier texto para personalizarla, luego descarga tu plan.</p>
+    ${goals.map((g,i)=>`
+      <div class="goal-card">
+        <span class="goal-domain">${icons[g.domain]||"🎯"} ${g.domain}</span>
+        <div class="goal-text" contenteditable="true" id="goal_${i}">${g.goal}</div>
+        <div class="goal-smart">
+          ${["S","M","A","R","T"].map(k=>`
+            <div class="goal-smart-item">
+              <div class="goal-smart-k">${{S:"Específica",M:"Medible",A:"Alcanzable",R:"Relevante",T:"Con plazo"}[k]}</div>
+              <div class="goal-smart-v" contenteditable="true" id="goal_${i}_${k}">${g[k]||""}</div>
+            </div>`).join("")}
+        </div>
+      </div>`).join("")}
+    <div style="text-align:center;margin-top:20px">
+      <button class="btn-goals" onclick="window.waamDownloadGoals(${goals.length})">⬇ Descargar Mi Plan de Acción Alineada™</button>
+    </div>`;
+}
+
+function downloadGoals(n){
+  const lines=["WHOLISTICALLY ALIGNED — PLAN DE ACCIÓN ALINEADA™","Generado de tu Evaluación WAAM™ · "+new Date().toLocaleDateString(),"═".repeat(60),""];
+  for(let i=0;i<n;i++){
+    const card=document.getElementById("goal_"+i);if(!card)continue;
+    const domain=card.previousElementSibling.textContent.trim();
+    lines.push(`META ${i+1} — ${domain}`,card.textContent.trim(),"");
+    [["S","Específica"],["M","Medible"],["A","Alcanzable"],["R","Relevante"],["T","Con plazo"]].forEach(([k,lbl])=>{
+      const v=document.getElementById(`goal_${i}_${k}`);
+      if(v)lines.push(`  ${lbl}: ${v.textContent.trim()}`);
+    });
+    lines.push("","─".repeat(60),"");
+  }
+  lines.push("Revisa estas metas con tu proveedor de salud.","En crisis, llama o envía un mensaje de texto al 988.");
+  const blob=new Blob([lines.join("\n")],{type:"text/plain"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="Plan_de_Accion_Alineada.txt";
+  a.click();URL.revokeObjectURL(a.href);
+}
+
+// ── Perspectivas de Neurodivergencia™ — cuestionario opcional de rasgos; NUNCA afecta la WWS™ ──
+const NDSCALE=["Para nada como yo","Un poco como yo","Bastante como yo","Muy parecido a mí"];
+const NDQ=[
+ {id:"nda1",g:"A",text:"Al leer, en reuniones o en conversación, ¿con qué frecuencia tu atención se desvía a mitad de camino — teniendo que retroceder o releer?"},
+ {id:"nda2",g:"A",text:"¿Con qué frecuencia las tareas cotidianas de varios pasos (formularios, mandados, proyectos) se estancan porque organizar los pasos pesa más que la tarea misma?"},
+ {id:"nda3",g:"A",text:"¿Con qué frecuencia pierdes el rastro de lo esencial — llaves, teléfono, citas, fechas límite — a pesar de sistemas creados justo para evitarlo?"},
+ {id:"nda4",g:"A",text:"¿Con qué frecuencia pospones tareas que requieren esfuerzo mental sostenido hasta que la presión externa te obliga a empezar?"},
+ {id:"nda5",g:"A",text:"¿Con qué frecuencia tu mente se siente como varios canales sonando a la vez, dificultando sintonizar solo uno?"},
+ {id:"ndh1",g:"H",text:"¿Con qué frecuencia sientes un motor interno — necesidad de moverte, inquietarte o hacer algo, incluso durante el descanso?"},
+ {id:"ndh2",g:"H",text:"¿Con qué frecuencia hablas por encima de otros o terminas sus oraciones — no por grosería, sino por un impulso que no logras frenar?"},
+ {id:"ndh3",g:"C",text:"Pensando en tu infancia (antes de los 12 años aproximadamente): ¿te describían como inquieto/a, soñador/a, disruptivo/a o alguien que \'no alcanzaba su potencial\'?"},
+ {id:"ndh4",g:"C",text:"De niño/a, ¿quedarte quieto/a, esperar tu turno o terminar las tareas escolares te costaba notablemente más esfuerzo que a tus compañeros?"},
+ {id:"ndi1",g:"I",text:"¿Con qué frecuencia actúas por impulso — compras, comentarios, decisiones — antes de que la parte que piensa te alcance?"},
+ {id:"ndi2",g:"I",text:"¿Con qué frecuencia funcionas con planes hechos en el momento en lugar de con anticipación, porque planificar por adelantado rara vez se sostiene?"},
+ {id:"ndi3",g:"I",text:"Cuando algo captura tu interés, ¿con qué frecuencia lo dejas todo y te sumerges — incluso con otras cosas pendientes?"},
+ {id:"ndi4",g:"I",text:"¿Con qué frecuencia dices cosas que inmediatamente desearías haber filtrado primero?"},
+ {id:"nds1",g:"S",text:"¿Con qué frecuencia las reglas sociales que otros parecen absorber automáticamente — charla casual, contacto visual, cuándo hablar — se sienten como algo que tuviste que estudiar y descifrar?"},
+ {id:"nds2",g:"S",text:"¿Con qué frecuencia se te escapan los significados implícitos — sarcasmo, indirectas, leer entre líneas — hasta que alguien te los explica?"},
+ {id:"nds3",g:"S",text:"¿Cuánto más agotadoras son las situaciones sociales sin estructura (fiestas, socializar libremente) que las estructuradas (una tarea, una actividad compartida)?"},
+ {id:"nds4",g:"S",text:"¿Con qué frecuencia prefieres la profundidad de tus intereses específicos sobre la conversación social amplia, aun cuando te cuesta socialmente?"},
+ {id:"ndr1",g:"R",text:"¿Con qué intensidad te afectan ciertas texturas, sonidos, luces u olores — ya sea angustia o fascinación — más allá de lo que otros parecen registrar?"},
+ {id:"ndr2",g:"R",text:"¿Cuánto te cuestan los cambios inesperados de planes o rutinas — en estrés, tiempo de recuperación o la necesidad de reiniciarte mentalmente?"},
+ {id:"ndr3",g:"R",text:"¿Con qué frecuencia encuentras verdadero consuelo en la repetición — las mismas comidas, las mismas rutas, volver a ver, releer, movimientos repetidos?"},
+ {id:"ndr4",g:"R",text:"¿Con qué intensidad te dedicas a tus intereses — una profundidad, detalle e inversión de tiempo que otros describen como \'demasiado\'?"},
+ {id:"ndm1",g:"M",text:"¿Con qué frecuencia actúas conscientemente lo \'normal\' en entornos sociales — ensayando frases, copiando expresiones, monitoreando tu propio lenguaje corporal?"},
+ {id:"ndm2",g:"M",text:"Después de socializar, ¿con qué frecuencia necesitas un tiempo considerable a solas para recuperarte del esfuerzo de parecer involucrado/a?"},
+ {id:"ndm3",g:"M",text:"¿Qué tan diferente es tu \'yo público\' de quien eres completamente a solas — no en valores, sino en cuánto te cuesta regular la actuación?"}
+];
+const ndAnswers={};
+function startND(){
+  document.getElementById("ndBody").innerHTML=`
+    <p style="font-size:13px;color:var(--mid);margin-bottom:20px;padding:12px 14px;background:#F7FAF8;border-radius:8px;border-left:3px solid var(--plum)">Para cada afirmación, elige cuánto describe tu patrón constante de toda la vida — no solo las últimas semanas. Responde como tu yo sin máscara.</p>
+    ${NDQ.map((q,i)=>`
+      <div class="q-block">
+        <div class="q-label"><span class="q-num" style="background:var(--plum-lt);color:var(--plum)">${i+1}</span><span>${q.text}</span></div>
+        <div class="likert" id="q_${q.id}">
+          ${NDSCALE.map((lbl,v)=>`<div class="likert-opt" onclick="window.waamSetND('${q.id}',${v},this)"><span class="opt-num">${v}</span><span class="opt-lbl">${lbl}</span></div>`).join("")}
+        </div>
+        <div class="val-msg" id="val_${q.id}">Por favor responde este ítem.</div>
+      </div>`).join("")}
+    <div style="text-align:center;margin-top:16px">
+      <button class="btn-nav btn-nav-primary" style="margin:0 auto" onclick="window.waamSubmitND()">Ver Mis Perspectivas de Neurodivergencia →</button>
+    </div>`;
+  document.getElementById("ndCard").scrollIntoView({behavior:"smooth"});
+}
+function setND(qid,val,el){
+  ndAnswers[qid]=val;
+  document.getElementById("q_"+qid).querySelectorAll(".likert-opt").forEach(e=>e.classList.remove("selected"));
+  el.classList.add("selected");
+  document.getElementById("val_"+qid)?.classList.remove("show");
+}
+function computeND(){
+  const sum=(ids)=>ids.reduce((s,k)=>s+(Number(ndAnswers[k])||0),0);
+  const attn=sum(["nda1","nda2","nda3","nda4","nda5","ndh1","ndh2","ndi1","ndi2","ndi3","ndi4"]);
+  const child=sum(["ndh3","ndh4"]);
+  const soc=sum(["nds1","nds2","nds3","nds4","ndr1","ndr2","ndr3","ndr4"]);
+  const mask=sum(["ndm1","ndm2","ndm3"]);
+  return {NDA:Math.round(attn/33*100),NDS:Math.round(soc/24*100),MASK:Math.round(mask/9*100),CHILD:child>=3};
+}
+function ndBand(p){return p<30?"Alineación baja":p<50?"Patrón emergente":p<70?"Patrón notable":"Patrón fuerte"}
+function ndSlug(p){return p<30?"low":p<50?"emerging":p<70?"notable":"strong"}
+function submitND(){
+  let ok=true;
+  NDQ.forEach(q=>{const vm=document.getElementById("val_"+q.id);
+    if(ndAnswers[q.id]===undefined){vm?.classList.add("show");ok=false}else vm?.classList.remove("show")});
+  if(!ok){document.querySelector("#ndBody .val-msg.show")?.scrollIntoView({behavior:"smooth",block:"center"});return}
+  const nd=computeND();
+  // La pantalla opcional de Neurodivergencia NO reenvia a Kajabi: el proxy actual
+  // reenviaria el formulario del idioma para el mismo contacto y podria volver a
+  // disparar la automatizacion de opt-in (email duplicado). Guardar los datos ND
+  // requiere un proxy que adjunte campos al contacto existente — mejora futura.
+  renderNDResults(nd);
+}
+function renderNDResults(nd){
+  const cards=[
+    {code:"WAAM-NDA™",label:"Atención · Función Ejecutiva · Impulsividad",v:nd.NDA},
+    {code:"WAAM-NDS™",label:"Comunicación Social · Sensorial · Rutinas",v:nd.NDS},
+    {code:"Índice de Enmascaramiento",label:"Esfuerzo de Camuflaje Social",v:nd.MASK},
+  ];
+  document.getElementById("ndBody").innerHTML=`
+    <div class="score-grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr))">
+      ${cards.map(c=>`<div class="score-card">
+        <div class="score-code" style="color:var(--plum)">${c.code}</div>
+        <div class="score-label">${c.label}</div>
+        <div class="score-bar-wrap"><div class="score-bar" style="width:${c.v}%;background:var(--plum)"></div></div>
+        <div class="score-val" style="color:var(--plum)">${c.v}%</div>
+        <div class="score-sev">${ndBand(c.v)}</div>
+      </div>`).join("")}
+    </div>
+    <div style="font-size:12.5px;color:var(--mid);margin:4px 0 16px">
+      ${nd.CHILD?"✓ Indicadores de inicio en la infancia presentes — relevante porque la identificación formal de diferencias de atención busca patrones que comienzan en la niñez.":"○ Indicadores de infancia limitados — vale la pena reflexionar sobre tus años escolares con un profesional, ya que la identificación formal busca patrones de la niñez."}
+      ${nd.MASK>=60&&nd.NDS>=30&&nd.NDS<70?" · Un enmascaramiento alto puede hacer que estos cuestionarios <em>subestimen</em> — tu patrón real puede ser más fuerte que estos números.":""}
+    </div>
+    <div class="loading-wrap" id="ndLoading" style="padding:28px">
+      <div class="spinner"></div>
+      <div class="loading-text">Interpretando tu patrón junto a tu perfil WAAM™<span class="loading-dots"></span></div>
+    </div>
+    <div id="ndAI" style="display:none"></div>
+    <div style="background:var(--plum-lt);border:1.5px solid var(--plum);border-radius:14px;padding:18px 20px;margin-top:18px">
+      <div style="font-size:15px;font-weight:600;color:var(--plum);margin-bottom:6px">¿Quieres una respuesta real — no solo un cuestionario?</div>
+      <div style="font-size:13.5px;color:var(--charcoal);line-height:1.7;margin-bottom:12px">Un cuestionario solo puede sugerir patrones. Una proveedora psiquiátrica certificada (PMHNP-BC) puede revisar contigo tu perfil WAAM™ y estas perspectivas en una evaluación formal — el paso que convierte el "quizás" en claridad.</div>
+      <a class="rec-cta" href="${KAJABI.OFFERS.clinicalReview}" target="_blank">Reservar una Revisión Clínica WAAM™</a>
+    </div>
+    <p style="font-size:11.5px;color:var(--mid);margin-top:14px">Estos índices describen alineación de rasgos para el autoconocimiento. No son umbrales diagnósticos, no afectan tu Puntuación de Bienestar Integral™, y muchas personas con fuerte alineación de rasgos florecen sin ninguna identificación formal — lo que importa es lo que te ayuda a ti.</p>`;
+  generateNDAnalysis(nd);
+}
+async function generateNDAnalysis(nd){
+  const R=window._WAAM_R||{pct:{},wws:"n/d"};
+  const prompt=`Eres el módulo Perspectivas de Neurodivergencia™ del WAAM Clinical Engine™. Proporcionas psicoeducación afirmativa de la neurodivergencia — rasgos presentados como diferencias con fortalezas y costos, nunca como déficits o trastornos que corregir. Nunca diagnosticas. RESPONDE COMPLETAMENTE EN ESPAÑOL, con calidez y especificidad.
+
+ÍNDICES DE RASGOS (0–100% de alineación):
+- WAAM-NDA™ Atención/Función Ejecutiva/Impulsividad: ${nd.NDA}% — ${ndBand(nd.NDA)}
+- WAAM-NDS™ Rasgos Social-Sensoriales/Autistas: ${nd.NDS}% — ${ndBand(nd.NDS)}
+- Índice de Enmascaramiento: ${nd.MASK}%
+- Indicadores de inicio en la infancia: ${nd.CHILD?"presentes":"limitados"}
+CARGA WAAM™ CENTRAL (contexto): Ánimo ${R.pct.ARM}% | Ansiedad ${R.pct.ATS}% | Sueño ${R.pct.SRF}% | WWS™ ${R.wws}
+
+Reglas de interpretación: Si el enmascaramiento ≥60 con NDS entre 30–69, señala que los cuestionarios pueden SUBESTIMAR presentaciones enmascaradas (especialmente común en mujeres y personas identificadas tarde). Si NDA ≥50 sin indicadores de infancia, señala con delicadeza que la identificación formal de diferencias de atención requiere inicio en la niñez, por lo que explorar la historia temprana con un clínico importa. Si la carga central (ansiedad/ánimo/sueño) está elevada junto a rasgos notables o fuertes, explica la hipótesis del efecto en cascada: el esfuerzo crónico de compensar rasgos no reconocidos puede generar ansiedad, agotamiento y alteración del sueño — y el apoyo que aborda los rasgos suele aliviar la carga. Si ambos índices son de alineación baja, dilo con claridad y valida que sus resultados WAAM™ centrales siguen siendo la historia principal.
+
+Genera exactamente estas secciones (máximo 350 palabras en total):
+## LO QUE SUGIERE TU PATRÓN
+## CÓMO PUEDE CONECTARSE CON TUS PUNTUACIONES CENTRALES
+## UNA RESPUESTA REAL ESTÁ DISPONIBLE
+Sección final: 2–3 oraciones sobre qué implica y qué aclara una evaluación formal con una proveedora psiquiátrica. Sin precios. Sin descargo final.`;
+  try{
+    const res=await fetch(WAAM_PROXY_URL,{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:800,messages:[{role:"user",content:prompt}]})
+    });
+    if(!res.ok)throw new Error("API "+res.status);
+    const data=await res.json();
+    document.getElementById("ndLoading").style.display="none";
+    const el=document.getElementById("ndAI");
+    el.style.display="block";
+    el.innerHTML=formatAI(data.content?.[0]?.text||"");
+  }catch(err){
+    document.getElementById("ndLoading").style.display="none";
+    const el=document.getElementById("ndAI");
+    el.style.display="block";
+    el.innerHTML=`<div style="text-align:center;color:var(--mid);font-size:13px;padding:12px">Interpretación no disponible — tus índices anteriores siguen siendo válidos. (${err.message})</div>`;
+  }
+}
+
+// expose handlers referenced by inline on* attributes (script is IIFE-scoped)
+window.waamBegin=begin; window.waamNext=nextSection; window.waamPrev=prevSection;
+window.waamSetAnswer=setAnswer; window.waamSubmitLead=submitLead;
+window.waamStartND=startND; window.waamSetND=setND; window.waamSubmitND=submitND;
+window.waamDownloadGoals=downloadGoals; window.waamAnswers=answers;
+
+render();
+})();
+</script>
+</div>
