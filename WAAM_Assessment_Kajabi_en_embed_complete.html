@@ -787,7 +787,7 @@ Respond with ONLY a JSON array, no markdown fences, no preamble:
   try{
     const res=await fetch(WAAM_PROXY_URL,{
       method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1500,messages:[{role:"user",content:prompt}]})
+      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:2500,messages:[{role:"user",content:prompt}]})
     });
     if(!res.ok)throw new Error(`API error: ${res.status}`);
     const data=await res.json();
