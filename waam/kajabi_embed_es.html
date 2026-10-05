@@ -1,0 +1,24 @@
+<!-- WAAM™ Assessment — Kajabi Custom Code block (es)
+     Paste this entire snippet into ONE Custom Code block.
+     Replace YOUR-SUBDOMAIN with your deployed Worker subdomain. -->
+<div class="waam-embed-wrap" style="width:100%;max-width:100%;margin:0 auto">
+  <iframe id="waam-frame-es"
+          src="https://waam-engine.YOUR-SUBDOMAIN.workers.dev/es"
+          title="Evaluación de Bienestar WAAM™"
+          style="width:100%;border:0;display:block;min-height:900px;background:transparent"
+          allow="clipboard-write"></iframe>
+</div>
+<script>
+(function(){
+  var f=document.getElementById("waam-frame-es");
+  var ORIGIN=new URL(f.src).origin;
+  var OFFSET=90; // clearance for the Kajabi sticky header; adjust if needed
+  function frameTop(){return f.getBoundingClientRect().top+window.pageYOffset}
+  window.addEventListener("message",function(e){
+    if(e.origin!==ORIGIN||!e.data||!e.data.waam)return;
+    if(e.data.type==="height"&&e.data.h>0){f.style.height=e.data.h+"px"}
+    else if(e.data.type==="scrollTop"){window.scrollTo({top:Math.max(0,frameTop()-OFFSET),behavior:"smooth"})}
+    else if(e.data.type==="scrollTo"){window.scrollTo({top:Math.max(0,frameTop()+e.data.y-OFFSET-40),behavior:"smooth"})}
+  });
+})();
+</script>
