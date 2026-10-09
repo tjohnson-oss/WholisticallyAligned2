@@ -1,0 +1,31 @@
+# Local-only secrets for `wrangler dev`. Copy to .dev.vars and fill in.
+#   cp .dev.vars.example .dev.vars
+# .dev.vars is gitignored and is NEVER uploaded. Production secrets are set
+# separately with `wrangler secret put <NAME>`.
+#
+# WARNING: put real values in .dev.vars, NOT in this file. This file is committed.
+
+# Anthropic key for the Clinical Engine narrative.
+# Treat the key used by the Vercel build as burned if Vercel rebuilt from main
+# between 2026-09-22 and 2026-10-09 — the implant ran with build env in scope.
+ANTHROPIC_API_KEY=
+
+# Shared secret for the Kajabi purchase webhook. Kajabi sends it back in an
+# X-WAAM-Secret header; /hook returns 401 without it.
+#   openssl rand -hex 32
+HOOK_SECRET=
+
+# Kajabi Public API credentials, for /lead (server-side lead capture).
+# Kajabi > Settings > Public API   (NOT Account Details)
+# Without these /lead returns 500 and the assessment still works — only the
+# contact/outcome record is skipped.
+KAJABI_API_KEY=
+KAJABI_API_SECRET=
+
+# Origins allowed to embed the assessment and call the API, comma-separated.
+# Empty is fine for local testing.
+ALLOWED_ORIGINS=
+
+# Paywall enforcement. wrangler.toml ships "true"; override to "false" here
+# only if you want to exercise the pre-Kajabi path locally.
+STRICT_PURCHASE=true

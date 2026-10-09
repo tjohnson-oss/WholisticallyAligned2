@@ -1,0 +1,45 @@
+name = "waam-engine"
+main = "waam-worker.js"
+compatibility_date = "2025-09-01"
+
+# Bundle the two assessment pages into the Worker as text modules.
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+fallthrough = true
+
+# ── Storage ───────────────────────────────────────────────────────────────
+# Responses are keyed by a SHA-256 hash of the email, never the email itself,
+# and expire automatically after 730 days (the retention disclosed at consent).
+# Create the namespace once, then paste the id Wrangler prints:
+#   npx wrangler kv namespace create WAAM_KV
+#   npx wrangler kv namespace create WAAM_KV --preview
+[[kv_namespaces]]
+binding = "WAAM_KV"
+id = "ea68e8444ba842d0b531687616be0e75"
+preview_id = "3135ba8e3df6445084cd9df436402126"
+
+[vars]
+# Your Kajabi origin(s), comma-separated. Used for two things:
+#   1) which sites may embed the assessment in an iframe (frame-ancestors)
+#   2) which origins may call the API
+# Leave empty ONLY while testing; set it before launch.
+ALLOWED_ORIGINS = "https://wholisticallyaligned.mykajabi.com,https://www.wholisticallyaligned.com"
+
+# Paywall enforcement.
+#   "false" (or unset) — results are released to anyone arriving on the
+#                        retrieval page with ?tier=results. Fine while you are
+#                        still wiring Kajabi; a curious visitor can forge it.
+#   "true"             — results are released ONLY to an email the /hook
+#                        webhook has recorded as having paid. This is the
+#                        setting to run in production.
+STRICT_PURCHASE = "true"
+
+# ── Secrets (never put these in this file) ────────────────────────────────
+#   npx wrangler secret put ANTHROPIC_API_KEY   # Clinical Engine narrative
+#   npx wrangler secret put HOOK_SECRET         # shared with Kajabi's webhook
+#
+# HOOK_SECRET is any long random string. Generate one with:
+#   openssl rand -hex 32
+# Kajabi sends it back in an X-WAAM-Secret header; requests without it are
+# rejected with 401, so nobody can grant themselves access by calling /hook.
