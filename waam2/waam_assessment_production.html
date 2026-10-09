@@ -247,6 +247,28 @@ const KAJABI = {
 const lbl={analysisMissing:"The analysis didn\u2019t generate. Your scores, routing, and goals below are unaffected.",goalsFailed:"Your goals didn\u2019t generate.",retry:"\u21bb Try again"};
 const WORKER_URL = "";   // same origin: the WAAM Engine serves this page and its API together
 
+// ── Lead capture ────────────────────────────────────────────────────────────
+// Routed through the Worker rather than posted straight to Kajabi. The previous
+// fetch(..., mode:"no-cors") returned an opaque response by design, so a wrong
+// form id or field name failed silently and the completion was never recorded —
+// the gap the launch checklist flags as "Kajabi form posting is unverified".
+// Still fire-and-forget from here: a Kajabi outage must never block results.
+function waamLead(fd){
+  const F = KAJABI.FIELDS, get = k => (F[k] ? (fd.get(F[k]) || "") : "");
+  const payload = {
+    name: get("name"), email: get("email"), lang: KAJABI.LANGUAGE,
+    tier: get("tier"), track: get("track"), wws: get("wws"),
+    domains: get("domains"), type: get("type"), purchase_tier: get("purchaseTier")
+  };
+  return fetch(WORKER_URL + "/lead", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  }).then(r => r.json().catch(() => ({})))
+    .then(d => { if (!d || d.ok !== true) console.warn("WAAM lead capture failed:", d && d.error, d && d.detail); return d; })
+    .catch(e => { console.warn("WAAM lead capture error:", e && e.message); });
+}
+
+
 // ── Page mode ────────────────────────────────────────────────────
 // No parameter  → the public assessment: free to take, paid to see.
 // ?tier=results → the protected post-purchase page: retrieve by email.
@@ -688,7 +710,7 @@ function renderResults(data){
     fd.append(KAJABI.FIELDS.domains,["ARM","ATS","SRF","NBM","PSB","FWL","SSB"].map(k=>k+R.pct[k]).join("|"));
     fd.append(KAJABI.FIELDS.type,"baseline");
     fd.append(KAJABI.FIELDS.purchaseTier,MODE||"results");
-    fetch(KAJABI.FORM_URL,{method:"POST",mode:"no-cors",body:fd}).catch(function(){});
+    waamLead(fd);
   }catch(err){}
   const names={ARM:"Affective Regulation & Mood",ATS:"Anxiety & Threat Sensitivity",SRF:"Sleep & Restorative Function",NBM:"Nutrition & Metabolic",PSB:"Physical Activation",FWL:"Functional Wellbeing",SSB:"Somatic Expression"};
   document.getElementById("mainContent").innerHTML=`
@@ -1076,7 +1098,7 @@ function submitND(){
     fd.append(KAJABI.FIELDS.domains,`NDA${nd.NDA}|NDS${nd.NDS}|MASK${nd.MASK}|CHILD${nd.CHILD?1:0}`);
     fd.append(KAJABI.FIELDS.type,"nd-screen");
     fd.append(KAJABI.FIELDS.lang,KAJABI.LANGUAGE);
-    fetch(KAJABI.FORM_URL,{method:"POST",mode:"no-cors",body:fd}).catch(function(){});
+    waamLead(fd);
   }catch(e){}
   renderNDResults(nd);
 }

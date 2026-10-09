@@ -115,6 +115,38 @@ if (!SECRET) {
   }
 }
 
+// 8b. lead capture — replaces the old no-cors POST, which could not report failure.
+// Until KAJABI_API_KEY/SECRET are set the endpoint refuses with 500 before doing
+// anything; that is still a real answer, which is the whole point of the change.
+{
+  const probe = await post("/lead", { email: EMAIL, lang: "en" });
+  if (probe.status === 500 && /credentials/i.test(probe.data.error || "")) {
+    ok("POST /lead", "500 — credentials not configured (expected until Kajabi keys are set)");
+  } else {
+    for (const [body, want, label] of [
+      [{ lang: "en" },                 400, "missing email"],
+      [{ email: "notanemail" },        400, "malformed email"],
+    ]) {
+      const r = await post("/lead", body);
+      r.status === want ? ok("POST /lead", `${want} — ${label}`)
+                        : no("POST /lead", `expected ${want}, got ${r.status} — ${label}`);
+    }
+    if (process.env.LIVE_LEAD === "1") {
+      const r = await post("/lead", {
+        email: EMAIL, name: "WAAM Test", lang: "en",
+        tier: "waam-tier-moderate", track: "waam-track-core", wws: "58",
+        domains: "ARM42|ATS55|SRF48|NBM51|PSB44|FWL53|SSB49", type: "baseline",
+        purchase_tier: "results",
+      });
+      r.status === 200 && r.data.ok
+        ? ok("POST /lead", `200 — submission ${r.data.formSubmissionId} on form ${r.data.formId}`)
+        : no("POST /lead", `status ${r.status} ${JSON.stringify(r.data).slice(0, 200)}`);
+    } else {
+      console.log("  \x1b[33m–\x1b[0m POST /lead   live submit skipped — set LIVE_LEAD=1 (creates a real Kajabi contact)");
+    }
+  }
+}
+
 // 9. forget
 {
   const r = await post("/forget", { email: EMAIL });

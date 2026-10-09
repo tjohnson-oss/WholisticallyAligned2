@@ -15,6 +15,13 @@ ANTHROPIC_API_KEY=
 #   openssl rand -hex 32
 HOOK_SECRET=
 
+# Kajabi Public API credentials, for /lead (server-side lead capture).
+# Kajabi > Settings > Public API   (NOT Account Details)
+# Without these /lead returns 500 and the assessment still works — only the
+# contact/outcome record is skipped.
+KAJABI_API_KEY=
+KAJABI_API_SECRET=
+
 # Origins allowed to embed the assessment and call the API, comma-separated.
 # Empty is fine for local testing.
 ALLOWED_ORIGINS=

@@ -39,6 +39,14 @@ import PAGE_ES from "./waam_assessment_production_es.html";
 
 const MODEL = "claude-sonnet-4-6";
 
+// ── Kajabi Public API (lead capture) ────────────────────────────────────────
+// Credentials come from Kajabi > Settings > Public API (NOT Account Details).
+const KAJABI_API_BASE = "https://api.kajabi.com/v1";
+const KAJABI_FORM_IDS = {
+  en: "2149686351", // "Assessment Form - English"
+  es: "2149686352", // "Assessment Form - Spanish"
+};
+
 // ── WAAM Clinical Engine™: proprietary weighted scoring (server-side) ──
 function pillScore(answers, qid, options, map) {
   const v = answers[qid];
@@ -408,6 +416,58 @@ const validEmail = (e) => typeof e === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.
 //   2. The tier parameter on the protected Kajabi page — presentation-level only.
 // Set STRICT_PURCHASE = "true" in wrangler.toml once the webhook is wired; until
 // then the tier parameter is accepted so the funnel works on day one.
+// ── Kajabi: OAuth client_credentials ──
+async function kajabiToken(env){
+  const res = await fetch(KAJABI_API_BASE + "/oauth/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: env.KAJABI_API_KEY,
+      client_secret: env.KAJABI_API_SECRET,
+      grant_type: "client_credentials",
+    }),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error("Kajabi OAuth failed (" + res.status + "): " + detail.slice(0, 200));
+  }
+  const data = await res.json();
+  if (!data.access_token) throw new Error("Kajabi OAuth response missing access_token");
+  return data.access_token;
+}
+
+// ── Kajabi: submit the language form (JSON:API). Returns the submission id. ──
+// Submitting a form — rather than creating a contact — is what opts the contact
+// in and fires the form's own automations inside Kajabi's async submission job.
+// Contacts created via /contacts land as "Never subscribed" and get no email.
+//
+// `extra` carries the assessment payload (tier, track, wws, lang, domains, type,
+// purchase_tier). Kajabi names custom-field attributes per form, so these are
+// passed through verbatim and only populate once the client supplies the real
+// names. An unknown attribute surfaces as a 502 with Kajabi's own message —
+// which is the point: the previous no-cors POST could not report anything.
+async function kajabiSubmit(token, formId, { name, email, extra }){
+  const res = await fetch(KAJABI_API_BASE + "/forms/" + formId + "/submit", {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer " + token,
+      "Content-Type": "application/vnd.api+json",
+      "Accept": "application/vnd.api+json",
+    },
+    body: JSON.stringify({
+      data: {
+        type: "form_submissions",
+        attributes: Object.assign({ name: name || email, email }, extra || {}),
+      },
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error("Kajabi submit failed (" + res.status + "): " + JSON.stringify(data).slice(0, 200));
+  }
+  return data?.data?.id;
+}
+
 async function purchaseState(env, email) {
   if (!env.WAAM_KV) return null;
   try { return await env.WAAM_KV.get(await emailKey(email, "p:"), "json"); }
@@ -566,6 +626,42 @@ export default {
         if (!env.WAAM_KV) return json({ error: "Storage is not configured" }, 500, headers);
         await env.WAAM_KV.delete(await emailKey(body.email, "a:"));
         return json({ ok: true }, 200, headers);
+      }
+
+      // ── 7. Lead capture ────────────────────────────────────────────────
+      // Replaces the page's fetch(..., mode:"no-cors") POST, whose response is
+      // opaque by design — a wrong form id or field name failed silently and the
+      // completion was simply never recorded. The client's own launch checklist
+      // flags this ("Kajabi form posting is unverified") and names this fix:
+      // route it through the Worker. Still fire-and-forget from the page, so a
+      // Kajabi outage never blocks someone's results.
+      if (url.pathname === "/lead") {
+        if (!env.KAJABI_API_KEY || !env.KAJABI_API_SECRET) {
+          return json({ error: "Kajabi credentials not configured" }, 500, headers);
+        }
+        if (!validEmail(body.email)) return json({ error: "A valid email is required" }, 400, headers);
+        const lang = body.lang === "es" ? "es" : "en";
+        const formId = KAJABI_FORM_IDS[lang];
+        if (!formId) return json({ error: 'No Kajabi form configured for language "' + lang + '"' }, 500, headers);
+
+        // Only the assessment payload — never anything the caller invented.
+        const extra = {};
+        for (const k of ["tier", "track", "wws", "domains", "type", "purchase_tier"]) {
+          const v = body[k];
+          if (v !== undefined && v !== null && v !== "") extra[k] = String(v).slice(0, 500);
+        }
+
+        try {
+          const token = await kajabiToken(env);
+          const formSubmissionId = await kajabiSubmit(token, formId, {
+            name: String(body.name || "").trim(),
+            email: String(body.email).trim(),
+            extra,
+          });
+          return json({ ok: true, lang, formId, formSubmissionId }, 200, headers);
+        } catch (err) {
+          return json({ error: "Kajabi request failed", detail: String(err.message || err).slice(0, 300) }, 502, headers);
+        }
       }
 
       return json({ error: "Unknown endpoint" }, 404, headers);
