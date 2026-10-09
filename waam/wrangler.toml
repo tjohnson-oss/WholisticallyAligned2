@@ -1,0 +1,19 @@
+name = "waam-engine"
+main = "waam-worker.js"
+compatibility_date = "2025-09-01"
+
+# Bundle the two assessment pages into the Worker as text modules.
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+fallthrough = true
+
+[vars]
+# Your Kajabi origin(s), comma-separated. Used for two things:
+#   1) which sites may embed the assessment in an iframe (frame-ancestors)
+#   2) which origins may call the API
+# Leave empty ONLY while testing; set it before launch.
+ALLOWED_ORIGINS = "https://YOUR-SUBDOMAIN.mykajabi.com,https://www.wholisticallyaligned.com"
+
+# The Anthropic API key is a SECRET, never a var. Set it with:
+#   wrangler secret put ANTHROPIC_API_KEY

@@ -1,0 +1,17 @@
+# Local-only secrets for `wrangler dev`. Copy to .dev.vars and fill in.
+#   cp .dev.vars.example .dev.vars
+# .dev.vars is gitignored and is NEVER uploaded — production secrets are set
+# separately with `wrangler secret put <NAME>`.
+#
+# ⚠ Put real values in .dev.vars, NOT in this file. This file is committed.
+
+# Anthropic key — copy from Vercel > Project > Settings > Environment Variables
+ANTHROPIC_API_KEY=
+
+# Kajabi OAuth client id / secret.
+# Kajabi > Settings > Public API   (NOT Account Details)
+KAJABI_API_KEY=
+KAJABI_API_SECRET=
+
+# Origins allowed to embed + call the API. Empty is fine for local testing.
+ALLOWED_ORIGINS=
