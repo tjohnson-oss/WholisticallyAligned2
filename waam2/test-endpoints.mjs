@@ -120,9 +120,14 @@ if (!SECRET) {
   const r = await post("/forget", { email: EMAIL });
   r.status === 200 ? ok("POST /forget", "200") : no("POST /forget", `status ${r.status}`);
 
+  // With a purchase on record the gate is passed and the missing answers show
+  // as 404. Without one, STRICT_PURCHASE refuses at 402 before the lookup —
+  // correct, and the reason the paywall leaks nothing about which emails exist.
   const r2 = await post("/results", { email: EMAIL, tier: "results" });
-  r2.status === 404 ? ok("  └ answers gone", "404 after forget")
-                    : no("  └ answers gone", `expected 404, got ${r2.status}`);
+  const want = SECRET ? 404 : 402;
+  r2.status === want
+    ? ok("  └ answers gone", `${want} after forget${SECRET ? "" : " (gated before lookup — no purchase set)"}`)
+    : no("  └ answers gone", `expected ${want}, got ${r2.status}`);
 
   if (SECRET) {
     // Known gap: /forget deletes the a: answers key but leaves the p: purchase
