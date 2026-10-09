@@ -1,0 +1,14 @@
+{
+  "name": "waam-engine",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test:local": "node test-endpoints.mjs",
+    "kv:create": "wrangler kv namespace create WAAM_KV && wrangler kv namespace create WAAM_KV --preview"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
