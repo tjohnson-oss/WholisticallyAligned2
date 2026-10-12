@@ -510,6 +510,7 @@ async function syncPurchases(env, opts){
   let newestMs = priorMs;
   let scanned = 0;
   const recorded = [];
+  const skipped = [];
 
   for (const row of rows) {
     const createdAt = (row && row.attributes && row.attributes.created_at) || "";
@@ -526,8 +527,24 @@ async function syncPurchases(env, opts){
     const customerId = (rel.customer && rel.customer.data && rel.customer.data.id) || "";
     if (!customerId) continue;
 
-    const email = await kajabiCustomerEmail(token, customerId);
-    if (!validEmail(email)) continue;
+    // A deleted contact 404s here. That must not abort the run: the watermark
+    // would stop advancing and every LATER purchase would go unrecorded, so one
+    // deleted contact would leave real buyers stuck at 402 indefinitely. Skip
+    // the row, report it, and carry on. The watermark still advances past it —
+    // an unresolvable customer has nobody to unlock — so a genuinely transient
+    // failure is recovered by re-running with since:"" rather than forever
+    // pinning the watermark behind a contact that is never coming back.
+    let email = "";
+    try {
+      email = await kajabiCustomerEmail(token, customerId);
+    } catch (err) {
+      skipped.push({ purchaseId: row.id, customerId, reason: String((err && err.message) || err).slice(0, 120) });
+      continue;
+    }
+    if (!validEmail(email)) {
+      skipped.push({ purchaseId: row.id, customerId, reason: "customer has no usable email" });
+      continue;
+    }
 
     if (!dryRun) await recordPurchase(env, email, offer);
     recorded.push({ purchaseId: row.id, email, offer, createdAt });
@@ -540,6 +557,8 @@ async function syncPurchases(env, opts){
     scanned,
     recorded: recorded.length,
     purchases: recorded,
+    skipped: skipped.length,
+    skippedDetail: skipped,
     watermark,
     dryRun: Boolean(dryRun),
   };
