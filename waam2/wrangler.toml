@@ -43,3 +43,10 @@ STRICT_PURCHASE = "true"
 #   openssl rand -hex 32
 # Kajabi sends it back in an X-WAAM-Secret header; requests without it are
 # rejected with 401, so nobody can grant themselves access by calling /hook.
+
+# Poll Kajabi for purchases. Kajabi's "default notification" is an admin email,
+# not an outbound webhook, so /hook is never called on its own — this is what
+# actually unlocks a paid customer's results. Five minutes is well inside the
+# time it takes a buyer to finish Kajabi's account-setup step and come back.
+[triggers]
+crons = ["*/5 * * * *"]

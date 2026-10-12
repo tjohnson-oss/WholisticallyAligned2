@@ -47,6 +47,19 @@ const KAJABI_FORM_IDS = {
   es: "2149686352", // "Assessment Form - Spanish"
 };
 
+// ── Purchase sync ───────────────────────────────────────────────────────────
+// Kajabi's "default notification" is an admin email, not an outbound webhook,
+// so a completed purchase never reaches /hook on its own. Rather than depend on
+// a webhook somebody has to configure — and that silently loses a paying
+// customer if it ever fails — the Worker polls Kajabi on a cron and records
+// purchases itself. /hook still works and stays the fastest path once wired.
+const WAAM_OFFERS = {
+  "2151443344": "results",        // kcuTVJPo - WAAM Results Unlock ($49 one-time)
+  "2151443421": "enroll",         // E6k3ytnz - Enrollment Offer ($79/month)
+  "2151443422": "enroll_prepaid", // ZSCG2c6G - Enrollment Offer Full Payment ($499)
+};
+const SYNC_WATERMARK_KEY = "sync:purchases:watermark";
+
 // ── WAAM Clinical Engine™: proprietary weighted scoring (server-side) ──
 function pillScore(answers, qid, options, map) {
   const v = answers[qid];
@@ -436,6 +449,102 @@ async function kajabiToken(env){
   return data.access_token;
 }
 
+// ── Kajabi: authenticated GET against the Public API ────────────────────────
+async function kajabiGet(token, path){
+  const res = await fetch(KAJABI_API_BASE + path, {
+    headers: { "Authorization": "Bearer " + token, "Accept": "application/vnd.api+json" },
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error("Kajabi GET " + path + " failed (" + res.status + "): " + detail.slice(0, 200));
+  }
+  return res.json();
+}
+
+// A purchase carries only a customer id, and `include=customer` returns nothing
+// on this account, so the buyer's email costs one extra call per new purchase.
+async function kajabiCustomerEmail(token, customerId){
+  const data = await kajabiGet(token, "/customers/" + encodeURIComponent(customerId));
+  return (data && data.data && data.data.attributes && data.data.attributes.email) || "";
+}
+
+// The single definition of a purchase record, written by both /hook and the
+// cron sync so the two paths cannot drift apart. Idempotent: re-recording the
+// same purchase re-merges the same offer and changes nothing.
+async function recordPurchase(env, email, offer){
+  const key = await emailKey(email, "p:");
+  const prior = (await env.WAAM_KV.get(key, "json")) || {};
+  const next = {
+    email: String(email).trim().toLowerCase(),
+    results: true,
+    enrolled: prior.enrolled || offer === "enroll" || offer === "enroll_prepaid",
+    offers: [...new Set([...(prior.offers || []), offer])],
+    updatedAt: new Date().toISOString(),
+  };
+  await env.WAAM_KV.put(key, JSON.stringify(next), { expirationTtl: RETENTION_DAYS * 86400 });
+  return next;
+}
+
+// Poll Kajabi for purchases newer than the stored watermark and record each one
+// belonging to a WAAM offer.
+//
+// Two Kajabi quirks shape this. `sort=-created_at` IS honoured, so the newest
+// purchase arrives first and the walk can stop at the watermark. `filter[offer_id]`
+// is NOT — it is accepted and silently ignored, exactly like `filter[email]` on
+// /contacts — so rows are filtered here instead. Never trust a filter on this
+// API without first proving it narrows the result.
+//
+// The watermark comparison is `<`, not `<=`: a purchase sharing the watermark's
+// exact timestamp is re-examined next run rather than skipped. Re-recording is
+// idempotent and costs one call; skipping would lose a paying customer.
+async function syncPurchases(env, opts){
+  const { since, limit = 100, dryRun = false } = opts || {};
+  const token = await kajabiToken(env);
+
+  const prior = typeof since === "string" ? since : ((await env.WAAM_KV.get(SYNC_WATERMARK_KEY)) || "");
+  const priorMs = Date.parse(prior) || 0;
+
+  const page = await kajabiGet(token, "/purchases?sort=-created_at&page%5Bsize%5D=" + limit);
+  const rows = (page && Array.isArray(page.data)) ? page.data : [];
+
+  let newestMs = priorMs;
+  let scanned = 0;
+  const recorded = [];
+
+  for (const row of rows) {
+    const createdAt = (row && row.attributes && row.attributes.created_at) || "";
+    const ms = Date.parse(createdAt) || 0;
+    if (ms && ms < priorMs) break;   // newest-first: everything beyond here is older
+    scanned++;
+    if (ms > newestMs) newestMs = ms;
+
+    const rel = (row && row.relationships) || {};
+    const offerId = (rel.offer && rel.offer.data && rel.offer.data.id) || "";
+    const offer = WAAM_OFFERS[offerId];
+    if (!offer) continue;            // a purchase of some other product
+
+    const customerId = (rel.customer && rel.customer.data && rel.customer.data.id) || "";
+    if (!customerId) continue;
+
+    const email = await kajabiCustomerEmail(token, customerId);
+    if (!validEmail(email)) continue;
+
+    if (!dryRun) await recordPurchase(env, email, offer);
+    recorded.push({ purchaseId: row.id, email, offer, createdAt });
+  }
+
+  const watermark = newestMs ? new Date(newestMs).toISOString() : prior;
+  if (!dryRun && newestMs > priorMs) await env.WAAM_KV.put(SYNC_WATERMARK_KEY, watermark);
+
+  return {
+    scanned,
+    recorded: recorded.length,
+    purchases: recorded,
+    watermark,
+    dryRun: Boolean(dryRun),
+  };
+}
+
 // ── Kajabi: submit the language form (JSON:API). Returns the submission id. ──
 // Submitting a form — rather than creating a contact — is what opts the contact
 // in and fires the form's own automations inside Kajabi's async submission job.
@@ -586,17 +695,7 @@ export default {
         if (!validEmail(body.email)) return json({ error: "A valid email is required" }, 400, headers);
         if (!env.WAAM_KV) return json({ error: "Storage is not configured" }, 500, headers);
 
-        const key = await emailKey(body.email, "p:");
-        const prior = (await env.WAAM_KV.get(key, "json")) || {};
-        const offer = String(body.offer || "results");
-        const next = {
-          email: String(body.email).trim().toLowerCase(),
-          results: true,
-          enrolled: prior.enrolled || offer === "enroll" || offer === "enroll_prepaid",
-          offers: [...new Set([...(prior.offers || []), offer])],
-          updatedAt: new Date().toISOString(),
-        };
-        await env.WAAM_KV.put(key, JSON.stringify(next), { expirationTtl: RETENTION_DAYS * 86400 });
+        await recordPurchase(env, body.email, String(body.offer || "results"));
         return json({ ok: true }, 200, headers);
       }
 
@@ -664,9 +763,44 @@ export default {
         }
       }
 
+      // ── 8. Purchase sync (operator / cron-equivalent) ───────────────────
+      // Same guard as /hook. Normally fired by the cron in wrangler.toml; this
+      // endpoint exists so a run can be forced and inspected. Pass since:"" to
+      // ignore the watermark and backfill, dryRun:true to report without writing.
+      if (url.pathname === "/sync") {
+        const secret = request.headers.get("X-WAAM-Secret") || "";
+        if (!env.HOOK_SECRET || secret !== env.HOOK_SECRET) return json({ error: "Unauthorized" }, 401, headers);
+        if (!env.KAJABI_API_KEY || !env.KAJABI_API_SECRET) {
+          return json({ error: "Kajabi credentials not configured" }, 500, headers);
+        }
+        if (!env.WAAM_KV) return json({ error: "Storage is not configured" }, 500, headers);
+        try {
+          const out = await syncPurchases(env, {
+            since:  typeof body.since === "string" ? body.since : undefined,
+            limit:  Math.min(Math.max(Number(body.limit) || 100, 1), 100),
+            dryRun: body.dryRun === true,
+          });
+          return json(Object.assign({ ok: true }, out), 200, headers);
+        } catch (err) {
+          return json({ error: "Purchase sync failed", detail: String(err.message || err).slice(0, 300) }, 502, headers);
+        }
+      }
+
       return json({ error: "Unknown endpoint" }, 404, headers);
     } catch (err) {
       return json({ error: err.message || "Server error" }, 500, headers);
     }
+  },
+
+  // Cron entry point, scheduled in wrangler.toml. See syncPurchases for why
+  // this exists rather than relying on a Kajabi webhook. Errors are logged and
+  // swallowed: a failed run is retried by the next tick, and the watermark only
+  // advances over rows actually examined, so nothing is skipped.
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(
+      syncPurchases(env)
+        .then(r => console.log("WAAM purchase sync:", JSON.stringify(r)))
+        .catch(err => console.error("WAAM purchase sync failed:", (err && err.message) || err))
+    );
   },
 };
