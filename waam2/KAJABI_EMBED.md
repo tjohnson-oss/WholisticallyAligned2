@@ -6,10 +6,20 @@ future fixes ship by deploying the Worker — nothing needs re-pasting.
 
 ## What changes
 
-The page `https://www.wholisticallyaligned.com/assesment` currently holds the
-**v1 file pasted inline**, with `WAAM_PROXY_URL` pointing at
-`https://wholistically-aligned2.vercel.app/api/waam`. Replace the entire
-contents of that Code Block with the snippet below.
+Both live pages hold the **v1 file pasted inline**, with `WAAM_PROXY_URL`
+pointing at `https://wholistically-aligned2.vercel.app/api/waam`:
+
+| page | note the spelling |
+|---|---|
+| `https://www.wholisticallyaligned.com/assesment` | English — one `s` in "assesment" |
+| `https://www.wholisticallyaligned.com/assessment-es` | Spanish — two `s` |
+
+Replace the **entire** contents of each Code Block with the matching snippet
+below. The old file is ~75KB; all of it goes. If it is left in place below the
+snippet, the page renders two assessments.
+
+The snippets are also on disk as paste-ready files, with no markdown fences to
+strip: `waam2/kajabi-embed-en.html` and `waam2/kajabi-embed-es.html`.
 
 **Do not cancel Vercel until this swap is live and tested** — the Vercel proxy
 is what the current page calls, so cancelling first takes the assessment down.
