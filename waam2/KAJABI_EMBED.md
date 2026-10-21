@@ -121,3 +121,45 @@ would mean the Kajabi domain is missing from `ALLOWED_ORIGINS` in
 Cancel the Vercel project. Nothing will reference it once this page is live,
 and it was the environment the Anthropic API key was exposed in during the
 Sep 22 – Oct 9 infection window.
+
+---
+
+# Post-purchase results pages
+
+Kajabi's offer redirect cannot carry a query string, so it cannot point at
+`/assesment?tier=results`. Instead, make two ordinary Kajabi pages whose embed
+has `?tier=results` baked into the iframe src, and redirect the offers to those.
+
+| new Kajabi page | paste | offer redirect |
+|---|---|---|
+| `/assessment-results` | `waam2/kajabi-embed-results-en.html` | WAAM Results Unlock (`kcuTVJPo`) |
+| `/assessment-results-es` | `waam2/kajabi-embed-results-es.html` | (Spanish equivalent, if offered) |
+
+The page names are a suggestion — any URL works, since the redirect just points
+at whichever page holds the snippet. What matters is that these pages are NOT
+the assessment pages: they open straight onto "Open your results".
+
+Do not put the `specialPageSeen` script on these pages either; a buyer arriving
+after checkout would be redirected to `/login` instead of their report.
+
+## Coupon findings (2026-10-21)
+
+`WAAMCREDIT49` exists but has two problems, both on the Kajabi side:
+
+1. **It is 49% off, not $49 off.** Measured at checkout: the $149 enrollment
+   became $75.99 and the $499 prepaid became $254.49. The results page
+   advertises $100 and $450, so the prepaid offer undercharges by ~$196.
+2. **`?coupon=WAAMCREDIT49` in the URL does not auto-apply.** The code has to
+   be typed into the discount field by hand. The results page appends it as a
+   query parameter, which Kajabi ignores — so a buyer following the credit link
+   is quoted $100 and charged $149.
+
+Until both are fixed, the 24-hour enrollment credit does not work as described.
+Fixing (1) alone still leaves the buyer charged full price via the link.
+
+## Enrollment offer pricing, as configured
+
+Confirmed at checkout for `E6k3ytnz`: **$79.00/month, 30-day trial, setup fee
+$149.00**, so "Due now" is $149.00. The results page says "$149 today, then
+$79/month", which matches the money but not the trial — the first $79 lands a
+month later than the copy implies.
