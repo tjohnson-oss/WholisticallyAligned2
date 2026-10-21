@@ -47,6 +47,25 @@ const KAJABI_FORM_IDS = {
   es: "2149686352", // "Assessment Form - Spanish"
 };
 
+// The public site that renders the forms. Lead capture posts here rather than
+// to the Public API: api.kajabi.com/forms/{id}/submit accepts custom-field
+// attributes and silently discards them, so the outcome dataset never arrived.
+// This endpoint is what the form's own embed posts to, and it does store them.
+const KAJABI_SITE_BASE = "https://www.wholisticallyaligned.com";
+
+// Kajabi assigns its own handles; these were confirmed against /custom_fields
+// and the live form markup on both languages. The titles are the client-facing
+// names, the handles are what the form actually accepts.
+const KAJABI_FIELD_HANDLES = {
+  tier:          "custom_4",  // waam_tier
+  track:         "custom_5",  // waam_track
+  wws:           "custom_6",  // waam_wws
+  lang:          "custom_7",  // waam_language
+  domains:       "custom_8",  // waam_domains
+  type:          "custom_9",  // waam_type
+  purchase_tier: "custom_10", // waam_purchase_tier
+};
+
 // ── Purchase sync ───────────────────────────────────────────────────────────
 // Kajabi's "default notification" is an admin email, not an outbound webhook,
 // so a completed purchase never reaches /hook on its own. Rather than depend on
@@ -564,36 +583,49 @@ async function syncPurchases(env, opts){
   };
 }
 
-// ── Kajabi: submit the language form (JSON:API). Returns the submission id. ──
-// Submitting a form — rather than creating a contact — is what opts the contact
-// in and fires the form's own automations inside Kajabi's async submission job.
-// Contacts created via /contacts land as "Never subscribed" and get no email.
-//
-// `extra` carries the assessment payload (tier, track, wws, lang, domains, type,
-// purchase_tier). Kajabi names custom-field attributes per form, so these are
-// passed through verbatim and only populate once the client supplies the real
-// names. An unknown attribute surfaces as a 502 with Kajabi's own message —
-// which is the point: the previous no-cors POST could not report anything.
-async function kajabiSubmit(token, formId, { name, email, extra }){
-  const res = await fetch(KAJABI_API_BASE + "/forms/" + formId + "/submit", {
+// ── Kajabi: submit the language form the way its own embed does ────────────
+// Form-encoded POST to the public site, not the Public API. Three things make
+// this the only path that works:
+//   - api.kajabi.com/forms/{id}/submit accepts custom-field attributes and
+//     silently drops them. Proven: a probe stored name and email and left all
+//     seven waam_* fields empty.
+//   - the form ships an authenticity_token that rotates on every fetch, but the
+//     endpoint does NOT require it, so no token round-trip is needed.
+//   - a custom field is only stored if it is attached to that form. Values for
+//     an unattached field are accepted and discarded, with no error.
+// Success is a 302 to the thank-you page, so redirects are not followed.
+async function kajabiSubmit(formId, { name, email, extra }){
+  const form = new URLSearchParams();
+  form.set("form_submission[name]", name || email);
+  form.set("form_submission[email]", email);
+  for (const [key, value] of Object.entries(extra || {})) {
+    const handle = KAJABI_FIELD_HANDLES[key];
+    if (handle) form.set("form_submission[" + handle + "]", value);
+  }
+
+  // The site sits behind bot protection that rejects a bare Worker subrequest
+  // with a 403 challenge page. These are the headers a real form post carries;
+  // without them the submission never reaches Kajabi.
+  const formUrl = KAJABI_SITE_BASE + "/forms/" + formId;
+  const res = await fetch(formUrl + "/form_submissions", {
     method: "POST",
     headers: {
-      "Authorization": "Bearer " + token,
-      "Content-Type": "application/vnd.api+json",
-      "Accept": "application/vnd.api+json",
+      "Content-Type": "application/x-www-form-urlencoded",
+      "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "Accept-Language": "en-US,en;q=0.9",
+      "Origin": KAJABI_SITE_BASE,
+      "Referer": formUrl,
     },
-    body: JSON.stringify({
-      data: {
-        type: "form_submissions",
-        attributes: Object.assign({ name: name || email, email }, extra || {}),
-      },
-    }),
+    body: form,
+    redirect: "manual",
   });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error("Kajabi submit failed (" + res.status + "): " + JSON.stringify(data).slice(0, 200));
-  }
-  return data?.data?.id;
+
+  // 302/303 to /thank_you is the success signal; a 200 means the form was
+  // re-rendered with validation errors, which is a failure worth reporting.
+  if (res.status === 302 || res.status === 303) return true;
+  const detail = await res.text().catch(() => "");
+  throw new Error("Kajabi form submit failed (" + res.status + "): " + detail.slice(0, 200));
 }
 
 async function purchaseState(env, email) {
@@ -754,29 +786,29 @@ export default {
       // route it through the Worker. Still fire-and-forget from the page, so a
       // Kajabi outage never blocks someone's results.
       if (url.pathname === "/lead") {
-        if (!env.KAJABI_API_KEY || !env.KAJABI_API_SECRET) {
-          return json({ error: "Kajabi credentials not configured" }, 500, headers);
-        }
+        // No credentials needed: this posts to the public form endpoint, the
+        // same one the form's own embed uses. The Public API is not involved.
         if (!validEmail(body.email)) return json({ error: "A valid email is required" }, 400, headers);
         const lang = body.lang === "es" ? "es" : "en";
         const formId = KAJABI_FORM_IDS[lang];
         if (!formId) return json({ error: 'No Kajabi form configured for language "' + lang + '"' }, 500, headers);
 
         // Only the assessment payload — never anything the caller invented.
-        const extra = {};
+        // `lang` is both the form selector and a stored field (waam_language),
+        // so it is set from the normalised value rather than read from body.
+        const extra = { lang };
         for (const k of ["tier", "track", "wws", "domains", "type", "purchase_tier"]) {
           const v = body[k];
           if (v !== undefined && v !== null && v !== "") extra[k] = String(v).slice(0, 500);
         }
 
         try {
-          const token = await kajabiToken(env);
-          const formSubmissionId = await kajabiSubmit(token, formId, {
+          await kajabiSubmit(formId, {
             name: String(body.name || "").trim(),
             email: String(body.email).trim(),
             extra,
           });
-          return json({ ok: true, lang, formId, formSubmissionId }, 200, headers);
+          return json({ ok: true, lang, formId, fields: Object.keys(extra) }, 200, headers);
         } catch (err) {
           return json({ error: "Kajabi request failed", detail: String(err.message || err).slice(0, 300) }, 502, headers);
         }
