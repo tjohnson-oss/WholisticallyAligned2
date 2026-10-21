@@ -74,6 +74,15 @@ Identical, except the `src` ends in `/es`:
 src="https://waam-engine.wholisticallyaligned.workers.dev/es"
 ```
 
+## The `?tier=` forwarding matters
+
+After checkout the buyer returns to the Kajabi page as `?tier=results`. The
+assessment reads that from `location.search` — which, inside an iframe, is the
+**Worker's** URL, not Kajabi's. Without the forwarding block in the snippet the
+parameter never arrives, the retrieve-by-email screen never appears, and a
+paying customer cannot reach their results at all. Only `results` and
+`enrolled` are passed through; nothing else is forwarded.
+
 ## After pasting — check these
 
 1. The assessment renders and the iframe grows to fit (no inner scrollbar).
@@ -81,6 +90,23 @@ src="https://waam-engine.wholisticallyaligned.workers.dev/es"
 3. Completing the assessment shows the free summary and the $49 unlock button.
 4. The Spanish page loads in Spanish.
 5. On a phone: no horizontal scrolling, and the page still resizes.
+6. Visit `<page>?tier=results` — it must show "Open your results", not the
+   start of the assessment. If it shows the assessment, the forwarding block
+   is missing from the snippet.
+
+## Known blocker on the live pages
+
+Both assessment pages carry custom JS that redirects **returning** visitors to
+`/library`, which sends anyone not logged in to `/login`:
+
+    if (localStorage.getItem("specialPageSeen") === "true") {
+      window.location.replace(libraryURL);
+    }
+
+The first visit sets the flag; every visit after that redirects. This also
+breaks the post-purchase return path, since the buyer comes back to the same
+page — so a customer who has paid $49 lands on a login wall instead of their
+results. It must be removed from both pages before launch.
 
 If the frame stays at 900px and never grows, the height messages are not
 arriving — check the browser console for a Content-Security-Policy error, which

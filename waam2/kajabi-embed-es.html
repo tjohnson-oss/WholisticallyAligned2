@@ -9,8 +9,21 @@
 <script>
 (function(){
   var ORIGIN = "https://waam-engine.wholisticallyaligned.workers.dev";
+  var PATH   = "/es";
   var frame  = document.getElementById("waam-frame");
   var wrap   = document.getElementById("waam-embed-wrap");
+
+  // After checkout the buyer returns to THIS page as ?tier=results. The
+  // assessment reads that parameter from its own URL, which inside an iframe
+  // is the Worker's, not Kajabi's — so without forwarding it the retrieve-by-
+  // email screen never appears and a paying customer cannot reach their
+  // results. Only the known values are passed on; nothing else is forwarded.
+  try {
+    var tier = new URLSearchParams(window.location.search).get("tier");
+    if (tier === "results" || tier === "enrolled") {
+      frame.src = ORIGIN + PATH + "?tier=" + tier;
+    }
+  } catch (e) {}
 
   window.addEventListener("message", function(e){
     // Only trust messages from the Worker that serves the assessment.
