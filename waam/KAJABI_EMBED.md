@@ -19,7 +19,7 @@ below. The old file is ~75KB; all of it goes. If it is left in place below the
 snippet, the page renders two assessments.
 
 The snippets are also on disk as paste-ready files, with no markdown fences to
-strip: `waam2/kajabi-embed-en.html` and `waam2/kajabi-embed-es.html`.
+strip: `waam/kajabi-embed-en.html` and `waam/kajabi-embed-es.html`.
 
 **Do not cancel Vercel until this swap is live and tested** — the Vercel proxy
 is what the current page calls, so cancelling first takes the assessment down.
@@ -132,8 +132,8 @@ has `?tier=results` baked into the iframe src, and redirect the offers to those.
 
 | new Kajabi page | paste | offer redirect |
 |---|---|---|
-| `/assessment-results` | `waam2/kajabi-embed-results-en.html` | WAAM Results Unlock (`kcuTVJPo`) |
-| `/assessment-results-es` | `waam2/kajabi-embed-results-es.html` | (Spanish equivalent, if offered) |
+| `/assessment-results` | `waam/kajabi-embed-results-en.html` | WAAM Results Unlock (`kcuTVJPo`) |
+| `/assessment-results-es` | `waam/kajabi-embed-results-es.html` | (Spanish equivalent, if offered) |
 
 The page names are a suggestion — any URL works, since the redirect just points
 at whichever page holds the snippet. What matters is that these pages are NOT
