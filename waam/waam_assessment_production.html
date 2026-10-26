@@ -613,7 +613,7 @@ async function fetchResults(){
     <div class="loading-wrap" style="padding:80px 24px">
       <div class="spinner"></div>
       <div class="loading-text">The WAAM Clinical Engine™ is scoring and analyzing your profile<span class="loading-dots"></span></div>
-      <div style="font-size:12px;color:var(--mid);margin-top:8px">15–30 seconds</div>
+      <div style="font-size:12px;color:var(--mid);margin-top:8px">This can take up to a minute</div>
     </div>`;
   try{
     const res=await fetch(WORKER_URL+"/results",{method:"POST",headers:{"Content-Type":"application/json"},
@@ -621,15 +621,23 @@ async function fetchResults(){
     if(!res.ok){
       const j=await res.json().catch(()=>({}));
       if(res.status===404)throw new Error("We couldn't find an assessment for that email. Check for a typo, or use the address you entered when you finished the questions.");
-      if(res.status===402)throw new Error("We couldn't find a purchase for that email. If you've just paid, give it a moment and try again.");
+      if(res.status===402){const e402=new Error("We couldn't find a purchase for that email. If you've just paid, give it a moment and try again.");e402.needsPurchase=true;throw e402}
       throw new Error(j.error||("Engine error: "+res.status));
     }
     renderResults(await res.json());
   }catch(err){
+    // A 402 means the answers exist but nothing has been paid for them. With no
+    // way to buy from here, someone who left at the paywall and came back later
+    // reached a dead end, so the unlock button is offered beside the retry.
+    const buy = err && err.needsPurchase
+      ? `<p style="font-size:13px;color:var(--mid);line-height:1.6;margin-top:14px">Your answers are saved — unlocking shows your full results.</p>
+         <a class="btn-primary" style="display:inline-flex;text-decoration:none;margin-top:10px" href="${KAJABI.OFFERS.results}" target="_blank">Unlock My Results — $49</a>`
+      : "";
     document.getElementById("mainContent").innerHTML=`
       <div class="gate-card">
         <div style="font-size:26px;margin-bottom:10px">⚠️</div>
         <p style="font-size:14px;color:var(--gray);line-height:1.7">${err.message}</p>
+        ${buy}
         <button class="btn-primary" style="margin-top:16px" onclick="renderRetrieve()">Try again</button>
       </div>`;
   }

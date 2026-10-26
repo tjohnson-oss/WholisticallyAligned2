@@ -613,7 +613,7 @@ async function fetchResults(){
     <div class="loading-wrap" style="padding:80px 24px">
       <div class="spinner"></div>
       <div class="loading-text">El WAAM Clinical Engine™ está puntuando y analizando su perfil<span class="loading-dots"></span></div>
-      <div style="font-size:12px;color:var(--mid);margin-top:8px">15–30 seconds</div>
+      <div style="font-size:12px;color:var(--mid);margin-top:8px">Esto puede tardar hasta un minuto</div>
     </div>`;
   try{
     const res=await fetch(WORKER_URL+"/results",{method:"POST",headers:{"Content-Type":"application/json"},
@@ -621,15 +621,23 @@ async function fetchResults(){
     if(!res.ok){
       const j=await res.json().catch(()=>({}));
       if(res.status===404)throw new Error("No encontramos una evaluación con ese correo. Revise si hay un error de escritura, o use la dirección que ingresó al terminar las preguntas.");
-      if(res.status===402)throw new Error("No encontramos una compra con ese correo. Si acaba de pagar, espere un momento e intente de nuevo.");
+      if(res.status===402){const e402=new Error("No encontramos una compra con ese correo. Si acaba de pagar, espere un momento e intente de nuevo.");e402.needsPurchase=true;throw e402}
       throw new Error(j.error||("Engine error: "+res.status));
     }
     renderResults(await res.json());
   }catch(err){
+    // A 402 means the answers exist but nothing has been paid for them. With no
+    // way to buy from here, someone who left at the paywall and came back later
+    // reached a dead end, so the unlock button is offered beside the retry.
+    const buy = err && err.needsPurchase
+      ? `<p style="font-size:13px;color:var(--mid);line-height:1.6;margin-top:14px">Sus respuestas están guardadas — al desbloquear verá sus resultados completos.</p>
+         <a class="btn-primary" style="display:inline-flex;text-decoration:none;margin-top:10px" href="${KAJABI.OFFERS.results}" target="_blank">Desbloquear Mis Resultados — $49</a>`
+      : "";
     document.getElementById("mainContent").innerHTML=`
       <div class="gate-card">
         <div style="font-size:26px;margin-bottom:10px">⚠️</div>
         <p style="font-size:14px;color:var(--gray);line-height:1.7">${err.message}</p>
+        ${buy}
         <button class="btn-primary" style="margin-top:16px" onclick="renderRetrieve()">Intentar de nuevo</button>
       </div>`;
   }
