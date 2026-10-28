@@ -74,8 +74,8 @@ const KAJABI_FIELD_HANDLES = {
 // purchases itself. /hook still works and stays the fastest path once wired.
 const WAAM_OFFERS = {
   "2151443344": "results",        // kcuTVJPo - WAAM Results Unlock ($49 one-time)
-  "2151443421": "enroll",         // E6k3ytnz - Enrollment Offer ($79/month)
-  "2151443422": "enroll_prepaid", // ZSCG2c6G - Enrollment Offer Full Payment ($499)
+  "2151443421": "enroll",         // E6k3ytnz - Enrollment Offer ($149.99 setup, then $79.99/month)
+  "2151443422": "enroll_prepaid", // ZSCG2c6G - Enrollment Full Payment ($499.99, then $79.99/month after 6 months)
 };
 const SYNC_WATERMARK_KEY = "sync:purchases:watermark";
 

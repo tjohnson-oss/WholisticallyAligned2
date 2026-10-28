@@ -231,9 +231,9 @@ const KAJABI = {
   // The $49 enrollment credit is applied as a Kajabi coupon. Create ONE
   // coupon worth $49 off, usable on both enrollment offers, and put its
   // code here. While the 24-hour window is live the checkout links carry
-  // ?coupon=<code>, so Kajabi charges $100 / $450 instead of $149 / $499.
+  // ?coupon=<code>, so Kajabi charges $100.99 / $450.99 instead of $149.99 / $499.99.
   // Leave this empty and the credited prices will NOT be honoured at
-  // checkout — the buttons would say $100 and Kajabi would charge $149.
+  // checkout — the buttons would say $100.99 and Kajabi would charge $149.99.
   CREDIT_COUPON: "WAAMCREDIT49",
   // Where "Go to your program" sends an enrolled participant.
   MEMBER_AREA_URL: "https://www.wholisticallyaligned.com/library",
@@ -679,10 +679,10 @@ function enrollOfferHtml(data){
       ${live?`<div id="creditBar" style="background:var(--gold-lt);border:1px solid #F0D090;border-radius:10px;padding:10px 14px;font-size:13px;color:var(--gold);margin-top:14px;font-weight:500">Su crédito de $49 aplica por <span id="creditClock" style="font-variant-numeric:tabular-nums">—</span></div>`
           :`<div style="background:var(--surface-sunk,#F1F4F2);border-radius:10px;padding:10px 14px;font-size:12.5px;color:var(--mid);margin-top:14px">Su crédito de inscripción de 24 horas ha vencido. El programa sigue disponible a precio completo.</div>`}
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
-        <a class="rec-cta" href="${offerUrl(KAJABI.OFFERS.enroll,live)}" target="_blank">${live?"Inscribirme — $100 hoy, luego $79 al mes":"Inscribirme — $149 hoy, luego $79 al mes"}</a>
-        <a class="rec-cta ghost" href="${offerUrl(KAJABI.OFFERS.enrollPrepaid,live)}" target="_blank">${live?"Pagar en su totalidad — $450":"Pagar en su totalidad — $499"}</a>
+        <a class="rec-cta" href="${offerUrl(KAJABI.OFFERS.enroll,live)}" target="_blank">${live?"Inscribirme — $100.99 hoy, luego $79.99 al mes":"Inscribirme — $149.99 hoy, luego $79.99 al mes"}</a>
+        <a class="rec-cta ghost" href="${offerUrl(KAJABI.OFFERS.enrollPrepaid,live)}" target="_blank">${live?"Pagar en su totalidad — $450.99":"Pagar en su totalidad — $499.99"}</a>
       </div>
-      <div style="font-size:11px;color:var(--mid);margin-top:10px;line-height:1.5">Los $79 mensuales continúan hasta que usted cancele, y puede cancelar en cualquier momento. Reembolso de 14 días en el programa. Pagar en su totalidad ahorra $124 frente al plan mensual.</div>
+      <div style="font-size:11px;color:var(--mid);margin-top:10px;line-height:1.5">Ambos planes continúan a $79.99 al mes hasta que usted cancele — de inmediato en el plan mensual, y a partir de los seis meses si paga en su totalidad. Puede cancelar en cualquier momento. Reembolso de 14 días en el programa. Pagar en su totalidad ahorra unos $130 en los primeros seis meses.</div>
     </div>`;
 }
 

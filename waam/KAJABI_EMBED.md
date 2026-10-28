@@ -142,24 +142,54 @@ the assessment pages: they open straight onto "Open your results".
 Do not put the `specialPageSeen` script on these pages either; a buyer arriving
 after checkout would be redirected to `/login` instead of their report.
 
-## Coupon findings (2026-10-21)
+## Coupon findings
 
-`WAAMCREDIT49` exists but has two problems, both on the Kajabi side:
+`WAAMCREDIT49` was originally created as **49% off** rather than $49 off, which
+undercharged the prepaid offer by roughly $196. That has been corrected and
+re-verified at checkout — it now takes $49 off both enrollment offers.
 
-1. **It is 49% off, not $49 off.** Measured at checkout: the $149 enrollment
-   became $75.99 and the $499 prepaid became $254.49. The results page
-   advertises $100 and $450, so the prepaid offer undercharges by ~$196.
-2. **`?coupon=WAAMCREDIT49` in the URL does not auto-apply.** The code has to
-   be typed into the discount field by hand. The results page appends it as a
-   query parameter, which Kajabi ignores — so a buyer following the credit link
-   is quoted $100 and charged $149.
+One limitation remains and is not fixable from our side: **`?coupon=` in the URL
+does not auto-apply.** Kajabi ignores the query parameter, so the buyer has to
+type the code into the discount field. The results page still appends it, which
+costs nothing and would start working if Kajabi ever honours it, but the credited
+price is only charged if the buyer enters the code by hand.
 
-Until both are fixed, the 24-hour enrollment credit does not work as described.
-Fixing (1) alone still leaves the buyer charged full price via the link.
+`TEST100F` is the 100%-off coupon used for end-to-end purchase testing. **Delete
+it before launch.**
 
-## Enrollment offer pricing, as configured
+## Enrollment offer pricing
 
-Confirmed at checkout for `E6k3ytnz`: **$79.00/month, 30-day trial, setup fee
-$149.00**, so "Due now" is $149.00. The results page says "$149 today, then
-$79/month", which matches the money but not the trial — the first $79 lands a
-month later than the copy implies.
+Agreed with the client 2026-10-28. Both offers are subscriptions with a setup
+fee, so access never lapses and the monthly simply begins when the trial ends.
+
+| offer | setup fee (due now) | trial | then |
+|---|---|---|---|
+| `E6k3ytnz` monthly | **$149.99** | 30 days | **$79.99/month** until cancelled |
+| `ZSCG2c6G` pay in full | **$499.99** | **180 days** | **$79.99/month** until cancelled |
+
+With the $49 credit applied the setup fees become **$100.99** and **$450.99**.
+The recurring $79.99 is never discounted.
+
+### What still needs changing in Kajabi
+
+1. `E6k3ytnz` is currently **$149.00 setup + $79.00/month as a multipay plan**.
+   Multipay stops after a fixed number of payments, so it cannot continue until
+   cancelled — it has to be changed to a **subscription**, and both amounts need
+   the `.99`.
+2. `ZSCG2c6G` is currently a **one-time $499.00** charge with no follow-on
+   billing. It has to become a **subscription**: setup fee $499.99, 180-day
+   trial, then $79.99/month. Confirm Kajabi accepts a trial that long — if it
+   caps shorter, the fallback is an automated email at month six carrying a
+   checkout link for a separate monthly offer, which converts far worse because
+   the customer has to act.
+3. The `WAAMCREDIT49` coupon must apply to the **setup fee only**, not to the
+   recurring $79.99. Verify this at checkout after the offers are rebuilt.
+4. Because billing now starts on a delay, the checkout page and receipt must
+   state plainly that **$79.99/month begins after six months and continues
+   until cancelled**. The results page already carries that line; Kajabi's
+   checkout needs it too.
+
+Access does **not** lock at month six under this structure. The client
+considered the alternative — a one-time $499.99 granting exactly 180 days, then
+a separate monthly purchase to continue — and chose auto-continue, because
+lock-and-re-buy loses most people at the six-month mark.

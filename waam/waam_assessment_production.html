@@ -231,9 +231,9 @@ const KAJABI = {
   // The $49 enrollment credit is applied as a Kajabi coupon. Create ONE
   // coupon worth $49 off, usable on both enrollment offers, and put its
   // code here. While the 24-hour window is live the checkout links carry
-  // ?coupon=<code>, so Kajabi charges $100 / $450 instead of $149 / $499.
+  // ?coupon=<code>, so Kajabi charges $100.99 / $450.99 instead of $149.99 / $499.99.
   // Leave this empty and the credited prices will NOT be honoured at
-  // checkout — the buttons would say $100 and Kajabi would charge $149.
+  // checkout — the buttons would say $100.99 and Kajabi would charge $149.99.
   CREDIT_COUPON: "WAAMCREDIT49",
   // Where "Go to your program" sends an enrolled participant.
   MEMBER_AREA_URL: "https://www.wholisticallyaligned.com/library",
@@ -679,10 +679,10 @@ function enrollOfferHtml(data){
       ${live?`<div id="creditBar" style="background:var(--gold-lt);border:1px solid #F0D090;border-radius:10px;padding:10px 14px;font-size:13px;color:var(--gold);margin-top:14px;font-weight:500">Your $49 credit applies for <span id="creditClock" style="font-variant-numeric:tabular-nums">—</span></div>`
           :`<div style="background:var(--surface-sunk,#F1F4F2);border-radius:10px;padding:10px 14px;font-size:12.5px;color:var(--mid);margin-top:14px">Your 24-hour enrollment credit has expired. The program is still available at full price.</div>`}
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
-        <a class="rec-cta" href="${offerUrl(KAJABI.OFFERS.enroll,live)}" target="_blank">${live?"Enroll — $100 today, then $79/month":"Enroll — $149 today, then $79/month"}</a>
-        <a class="rec-cta ghost" href="${offerUrl(KAJABI.OFFERS.enrollPrepaid,live)}" target="_blank">${live?"Pay in full — $450":"Pay in full — $499"}</a>
+        <a class="rec-cta" href="${offerUrl(KAJABI.OFFERS.enroll,live)}" target="_blank">${live?"Enroll — $100.99 today, then $79.99/month":"Enroll — $149.99 today, then $79.99/month"}</a>
+        <a class="rec-cta ghost" href="${offerUrl(KAJABI.OFFERS.enrollPrepaid,live)}" target="_blank">${live?"Pay in full — $450.99":"Pay in full — $499.99"}</a>
       </div>
-      <div style="font-size:11px;color:var(--mid);margin-top:10px;line-height:1.5">$79/month continues until you cancel, and you can cancel any time. 14-day refund on the program. Paying in full saves $124 against the monthly path.</div>
+      <div style="font-size:11px;color:var(--mid);margin-top:10px;line-height:1.5">Both plans continue at $79.99/month until you cancel — right away on the monthly plan, and starting after six months if you pay in full. Cancel any time. 14-day refund on the program. Paying in full saves about $130 over the first six months.</div>
     </div>`;
 }
 
