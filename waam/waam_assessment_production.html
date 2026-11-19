@@ -617,6 +617,22 @@ function renderWorking(title, note){
     </div>`;
 }
 
+// Shown while a 402 is being re-checked. It deliberately carries the unlock
+// button too: the same 402 means "paid seconds ago, not synced yet" for one
+// person and "never paid" for another, and the page cannot tell them apart.
+// Making the second group sit through the wait to reach a buy button would be
+// worse than the bug this fixes. If they buy in the new tab, the poll still
+// running here picks it up and opens the results without them doing anything.
+function renderConfirming(){
+  document.getElementById("mainContent").innerHTML=`
+    <div class="gate-card">
+      <div class="spinner"></div>
+      <p style="font-size:14px;color:var(--gray);line-height:1.7">Checking for your purchase. If you've just paid, stay on this page — your results will open on their own, and there's no need to pay again.</p>
+      <p style="font-size:13px;color:var(--mid);line-height:1.6;margin-top:18px">Not unlocked yet? Your answers are saved — unlocking shows your full results.</p>
+      <a class="btn-primary" style="display:inline-flex;text-decoration:none;margin-top:10px" href="${KAJABI.OFFERS.results}" target="_blank">Unlock My Results — $49</a>
+    </div>`;
+}
+
 async function fetchResults(){
   const el=document.getElementById("retrieveEmail");
   const e=(el?el.value:leadEmail||"").trim();
@@ -640,7 +656,7 @@ async function fetchResults(){
       if(res.status===404)throw new Error("We couldn't find an assessment for that email. Check for a typo, or use the address you entered when you finished the questions.");
       if(res.status===402){
         if(Date.now()<confirmDeadline){
-          if(!confirming){confirming=true;renderWorking("Confirming your purchase","This can take a few minutes. Please don't pay again — this page updates on its own.")}
+          if(!confirming){confirming=true;renderConfirming()}
           await new Promise(r=>setTimeout(r,CONFIRM_GAP_MS));
           continue;
         }
