@@ -602,6 +602,21 @@ function renderRetrieve(){
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
+// A purchase reaches this page through a 5-minute cron, so "no purchase yet" is
+// usually a statement about timing rather than a final answer. These control how
+// long a 402 is re-checked before it is treated as a real miss: one full cron
+// cycle plus margin.
+const CONFIRM_TOTAL_MS=6*60*1000, CONFIRM_GAP_MS=10*1000;
+
+function renderWorking(title, note){
+  document.getElementById("mainContent").innerHTML=`
+    <div class="loading-wrap" style="padding:80px 24px">
+      <div class="spinner"></div>
+      <div class="loading-text">${title}<span class="loading-dots"></span></div>
+      <div style="font-size:12px;color:var(--mid);margin-top:8px">${note}</div>
+    </div>`;
+}
+
 async function fetchResults(){
   const el=document.getElementById("retrieveEmail");
   const e=(el?el.value:leadEmail||"").trim();
@@ -609,22 +624,33 @@ async function fetchResults(){
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)){if(v){v.textContent="Por favor ingrese un correo electrónico válido.";v.classList.add("show")}return}
   if(v)v.classList.remove("show");
   leadEmail=e;
-  document.getElementById("mainContent").innerHTML=`
-    <div class="loading-wrap" style="padding:80px 24px">
-      <div class="spinner"></div>
-      <div class="loading-text">El WAAM Clinical Engine™ está puntuando y analizando su perfil<span class="loading-dots"></span></div>
-      <div style="font-size:12px;color:var(--mid);margin-top:8px">Esto puede tardar hasta un minuto</div>
-    </div>`;
+  renderWorking("El WAAM Clinical Engine™ está puntuando y analizando su perfil","Esto puede tardar hasta un minuto");
+  // A 402 straight after checkout means the cron has not caught up yet, not that
+  // the payment failed. Reading it as a failure is what the screen used to
+  // invite: one tester paid a second time 98 seconds after the first. So the
+  // page waits the cron out and says plainly not to pay again.
+  const confirmDeadline=Date.now()+CONFIRM_TOTAL_MS;
+  let confirming=false;
   try{
-    const res=await fetch(WORKER_URL+"/results",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({email:e,tier:MODE})});
-    if(!res.ok){
+    for(;;){
+      const res=await fetch(WORKER_URL+"/results",{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({email:e,tier:MODE})});
+      if(res.ok){renderResults(await res.json());return}
       const j=await res.json().catch(()=>({}));
       if(res.status===404)throw new Error("No encontramos una evaluación con ese correo. Revise si hay un error de escritura, o use la dirección que ingresó al terminar las preguntas.");
-      if(res.status===402){const e402=new Error("No encontramos una compra con ese correo. Si acaba de pagar, espere un momento e intente de nuevo.");e402.needsPurchase=true;throw e402}
+      if(res.status===402){
+        if(Date.now()<confirmDeadline){
+          if(!confirming){confirming=true;renderWorking("Confirmando su compra","Esto puede tardar unos minutos. Por favor no pague de nuevo — esta página se actualiza sola.")}
+          await new Promise(r=>setTimeout(r,CONFIRM_GAP_MS));
+          continue;
+        }
+        const e402=new Error(confirming
+          ?"Todavía no vemos una compra con ese correo. Los pagos pueden tardar unos minutos en llegarnos — por favor intente de nuevo en un momento en lugar de pagar una segunda vez."
+          :"No encontramos una compra con ese correo. Si acaba de pagar, espere un momento e intente de nuevo.");
+        e402.needsPurchase=true;throw e402;
+      }
       throw new Error(j.error||("Engine error: "+res.status));
     }
-    renderResults(await res.json());
   }catch(err){
     // A 402 means the answers exist but nothing has been paid for them. With no
     // way to buy from here, someone who left at the paywall and came back later
